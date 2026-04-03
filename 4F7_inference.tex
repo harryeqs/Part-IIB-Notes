@@ -1,0 +1,279 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+\usepackage[T1]{fontenc}
+\usepackage{palatino}
+\usepackage{amsmath, amssymb}
+\usepackage{cancel}
+\usepackage{titling}
+\usepackage{parskip}
+
+\setlength{\droptitle}{-5em}
+\preauthor{\begin{center}\large\vspace{0.5em}}
+\postauthor{\end{center}\vspace{-0.5em}}
+    
+\title{
+    {\scshape  Part IIB Revision Notes} \\ 
+    \vspace{0.5em}
+    \textbf{4F7: Statistical Signal and Network Models} \\ 
+    Inference in State-Space Models}
+\author{Qianshuo (Harry) Ye}
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Preliminaries}
+\subsection*{Bayes's Theorem}
+$$
+\underbrace{p(x|y, \theta)}_{\text{Posterior Distribution}} = \frac{\underbrace{p(y | x, \theta)}_{\text{Likelihood}} \underbrace{p(x|\theta)}_{\text{Prior}}}{\underbrace{p(y|\theta)}_{\text{Marginal Likelihood}}}
+$$
+with $y$ = observations, $x$ = quantity of interest (state) and $\theta$ = model parameters.
+
+${p(y|\theta) = \int_x p(y|x, \theta) p(x|\theta) dx}$ is the marginal likelihood.
+
+\subsection*{Multivariate Gaussian}
+For a length $N$ random column vector $x$ with mean $\boldsymbol{\mu}$ and covariance $C_X$, the probability density function is given by:
+$$
+f_X(x) = \frac{1}{(2\pi)^{N/2} |C_X|^{1/2}} \exp\left(-\frac{1}{2}(x-\boldsymbol{\mu})^\top C_X^{-1} (x-\boldsymbol{\mu})\right)
+$$
+
+The mean vector: $\boldsymbol{\mu} = \mathbb{E}[X]$ and the covariance matrix: $C_X = \mathbb{E}[(X-\boldsymbol{\mu})(X-\boldsymbol{\mu})^\top]$ fully characterise the multivariate Gaussian distribution.
+
+To sample from a multivariate Gaussian distribution:
+\begin{enumerate}
+    \item Compute an $M$ such that $C_X = MM^\top$ (e.g., via Cholesky decomposition).
+    \item Sample a standard normal vector $u \sim \mathcal{N}(0, I)$.
+    \item Transform the standard normal vector to obtain a sample from the desired distribution: $x = \boldsymbol{\mu} + Mu$.
+    \item The resulting vector $x$ is a random sample from $\mathcal{N}(\boldsymbol{\mu}, C_X)$.
+\end{enumerate}
+
+\section{State-Space Models}
+For a time series with states $x_t$ and observations $y_t$, a state-space model consists of (assuming Markov structure):
+\begin{enumerate}
+    \item State evolution: $x_{t+1} \sim f(x_t | x_{t-1})$
+    \item Observation: $y_{t+1} \sim g(y_{t+1} | x_{t+1})$
+\end{enumerate}
+
+The joint density is
+\begin{align*}
+    p(x_{0:t}, y_{0:t}) &= p(x_0) \prod_{i=1}^{t} p(x_i | x_{0:i-1}) p(y_i | x_{0:i}, y_{0:i-1}) \\
+    &= p(x_0) \prod_{i=1}^{t} f(x_i | x_{i-1}) g(y_i | x_i)
+\end{align*}
+
+The conditional probability
+$$
+p(x_t | y_t, x_{t-1}) = \frac{p(x_t | x_{t-1}) p(y_t | x_t, x_{t-1})}{p(y_t | x_{t-1})} = \frac{f(x_t | x_{t-1}) g(y_t | x_t)}{\int f(x_t | x_{t-1}) g(y_t | x_t) dx_t}
+$$
+
+\section{Continuous-Time Models}
+Linear continuous-time state-space models is given by:
+$$
+\dot{x}(t) = A x(t) + MW(t)
+$$
+where $W(t)$ is a continuous-time white noise process with covariance with zero mean and autocorrelation function $R_{WW}(\tau) = \sigma_W^2\delta(\tau)$.
+
+Apply Laplace transform to both side and rearange:
+$$
+\bar{X}(s) = (sI - A)^{-1} x(0) + (sI - A)^{-1} M \bar{W}(s)
+$$
+
+Convert back to time domain:
+$$
+x(t) = \exp (At) x(0) + \underbrace{\int_0^t \exp({A(t-\tau)}) M W(\tau) d\tau}_{\text{Convolution with white noise, } C}
+$$
+
+In general case, the continuouse-time model can be written in discrete-time form as
+$$
+x(t + \delta t) = \exp(A\delta t) x(t) + C
+$$
+
+The covariance of $C$ is given by:
+\begin{align*}
+    \text{cov}(C) &= \mathbb{E}[C C^\top]  - \overbrace{\mathbb{E}[C] \mathbb{E}[C]^\top}^{=0}\\
+    &= \int_0^t \int_0^t \exp(A(t-\tau)) M R_{WW}(\tau - \tau') M^\top \exp(A^\top (t-\tau')) d\tau d\tau' \\
+    &= \sigma_W^2 \int_0^t \exp(A(t-\tau)) M M^\top \exp(A^\top (t-\tau)) d\tau
+\end{align*}
+which must be calculated on a case-by-case basis.
+
+For the Ornstein-Uhlenbeck (OU) process with $A = \rho$ and $M = b$,
+the covariance is $\text{cov}(C) = -\frac{\sigma_W^2 b^2}{2\rho}(1 - \exp(2\rho t))$, 
+giving $x(t + \delta t) \sim \mathcal{N}\left(\exp(\rho\delta t) x(t), -\frac{\sigma_W^2 b^2}{2\rho}(1 - \exp(2\rho \delta t))\right)$.
+
+\section{Filtering}
+Given $p(x_t | y_{1:t})$, find $p(x_{t+1} | y_{1:t+1})$ using filtering recursions in two steps: Prediction and Correction.
+
+\subsubsection*{Prediction step ('Chapman-Kolmogorov')}
+\begin{align*}
+    p(x_{t+1} | y_{1:t}) &= \int p(x_t, x_{t+1} | y_{1:t}) dx_t \\
+    &= \int  p(x_t | y_{1:t}) p(x_{t+1} | x_t, y_{1:t}) dx_t \\
+    &= \int p(x_t | y_{1:t}) f(x_{t+1} | x_t)dx_t
+\end{align*}
+
+\subsubsection*{Correction step (Bayes's Theorem)}
+\begin{align*}
+    p(x_{t+1} | y_{1:t+1}) &= \frac{p(y_{t+1} | x_{t+1}, y_{1:t}) p(x_{t+1} | y_{1:t})}{p(y_{t+1} | y_{1:t})} \\
+    &= \frac{g(y_{t+1} | x_{t+1}) p(x_{t+1} | y_{1:t})}{p(y_{t+1} | y_{1:t})}
+\end{align*}
+
+\section{Kalman Filter}
+Kalman filter can be applied to linear Gaussian state-space models, which follows:
+\begin{align*}
+    f(x_t | x_{t-1}) = \mathcal{N}(A x_{t-1}, \Sigma_v) & \longrightarrow x_t = A x_{t-1} + v_t \\
+    g(y_{t} | x_{t}) = \mathcal{N}(B x_{t}, \Sigma_w) & \longrightarrow y_t = B x_t + w_t
+\end{align*}
+where $v_t$ and $w_t$ are independent Gaussian noise with zero mean and covariance $\Sigma_v$ and $\Sigma_w$ respectively. The inital state is also Gaussian distributed:
+$f(x_0) = \mathcal{N}(\mu_{0|0}, P_{0|0})$.
+
+Goal: Find the update rules to the filtering distribution $p(x_t | y_{1:t}) = \mathcal{N}(\mu_{t|t}, P_{t|t})$.
+
+\subsection*{Kalman Filter for General Case}
+\begin{align*}
+\mu_{t | t-1} &= A \mu_{t-1 | t-1} \\
+P_{t|t-1} &= A P_{t-1|t-1} A^\top + \Sigma_v \\
+K_t &= P_{t|t-1} B^\top (B P_{t|t-1} B^\top + \Sigma_w)^{-1} \\
+P_{t|t} &= (I - K_t B) P_{t | t-1} \\
+\mu_{t|t} &= \mu_{t | t-1} + K_t (y_t - B \mu_{t | t-1})
+\end{align*}
+
+Kalman Gain $K_t$: How much the prediction should be adjusted based on the new observation.
+
+Innovation $y_t - B \mu_{t | t-1}$: How different is the observation from the prediction.
+
+\subsection*{Prediction Error Decomposition with Kalman Filter}
+The full likelihood is given by: 
+$$
+p(y_{1:T}) = \prod_{t=1}^{T-1} p(y_{t+1} | y_{1:t})
+$$
+where $p(y_{t+1} | y_{1:t}) = \mathcal{N}(B \mu_{t+1|t}, B P_{t+1|t} B^\top + \Sigma_w)$, subject to a parameter of interest $\theta$.
+
+Maximum likelihood estimate: $\hat{\theta}_{\text{ML}} = \arg\max_\theta p(y_{1:T} | \theta)$
+
+Maximum a posteriori estimate: $\hat{\theta}_{\text{MAP}} = \arg\max_\theta p(y_{1:T} | \theta) p(\theta)$
+
+\section{The Extended Kalman Filter}
+Non-linear state-space model:
+\begin{align*}
+    x_t &= A(x_{t-1}, v_t) \\
+    y_t &= B(x_t, w_t)
+\end{align*}
+where $v_t \sim \mathcal{N}(0, \Sigma_v)$ and $w_t \sim \mathcal{N}(0, \Sigma_w)$, can be linearised by expanding $A$ and $B$ using 1st order multivariate Taylor expansion around $x_t = x^*, v_t = 0$ and  $x_t = x^+, w_t = 0$ respectively:
+\begin{align*}
+    A(x_{t-1}, v_t) &\approx A(x^*, 0) + \frac{\partial A}{\partial x_{t-1}} (x_{t-1} - x^*) + \frac{\partial A}{\partial v_t} v_t = A'x_{t-1} + C + Dv_t \\
+    B(x_t, w_t) &\approx B(x^+, 0) + \frac{\partial B}{\partial x_t} (x_t - x^+) + \frac{\partial B}{\partial w_t} w_t = B' x_t + E + F w_t
+\end{align*}
+
+The Extended Kalman Filter:
+\begin{align*}
+\mu_{t | t-1} &= A' \mu_{t-1 | t-1} + C \\
+P_{t|t-1} &= A' P_{t-1|t-1} A'^\top + D \Sigma_v D^\top \\
+K_t &= P_{t|t-1} B'^\top (B' P_{t|t-1} B'^\top + F \Sigma_w F^\top)^{-1} \\
+P_{t|t} &= (I - K_t B') P_{t | t-1} \\
+\mu_{t|t} &= \mu_{t | t-1} + K_t (y_t - B' \mu_{t | t-1} - E)
+\end{align*}
+
+\section{Particle Filters}
+\subsection*{General Monte Carlo}
+Use random samples to represent the distribution:
+\begin{align*}
+    x^{(i)} \overset{\text{i.i.d.}}{\sim} p(x),& \quad i = 1, \dots, N \text{ for large } N \\
+    p(x) &\approx \frac{1}{N} \sum_{i=1}^N \underbrace{\delta(x - x^{(i)})}_{\delta_{x^{(i)}}(x)}
+\end{align*}
+
+Monte Carlo Expectation:
+$$
+\bar{h} = \int h(x) p(x) dx \approx \frac{1}{N} \sum_{i=1}^N h(x^{(i)})
+$$
+
+\subsection*{Importance Sampling}
+Draw random samples from a distribution $q(x)$ instead of $p(x)$, the expectation with respect to $p(x)$ can be estimated with
+\begin{align*}
+    \bar{h} = \int h(x)\frac{p(x)}{q(x)} q(x) dx \approx \frac{1}{N} \sum_{i=1}^N h(x^{(i)}) \underbrace{\frac{p(x^{(i)})}{q(x^{(i)})}}_{\tilde{w}^{(i)}}, \quad x^{(i)} \overset{\text{i.i.d.}}{\sim} q(x)
+\end{align*}
+where $\tilde{w}^{(i)} = \frac{p(x^{(i)})}{q(x^{(i)})}$ is the unnormalised importance weight.
+
+\subsection*{Monte Carlo Filtering}
+Infer the filtering distribution $p(x_t | y_{1:t})$ or estimate the expectation with importance sampling:
+$$
+\bar{h} = \int h(x_t) p(x_t | y_{1:t}) dx_t \approx \frac{1}{N} \sum_{i=1}^N h(x_t^{(i)}) w_t^{(i)}, \quad x_t^{(i)} \overset{\text{i.i.d.}}{\sim} q(x_t)
+$$
+where $w_t^{(i)} \propto \frac{p(x_t^{(i)} | y_{1:t})}{q(x_t^{(i)})}$ is the normalised importance weight. The filtering density is approxiamted as $p(x_t | y_{1:t}) \approx \sum_{i=1}^N w_t^{(i)} \delta_{x_t^{(i)}}(x_t)$.
+
+\subsection*{Resampling}
+For $i = 1, \dots, N$, set $x'^{(i)} = x^{(j)}$ with probability $w^{(j)}$, i.e. each $x'^{(i)}$ is drawn from a categorical distribution with probabilities $w^{(1)}, \dots, w^{(N)}$.
+
+The density function $p(x)$ transform from a weighted to an unweighted approximation:
+$$
+p(x) \approx \sum_{i=1}^N w^{(i)} \delta_{x^{(i)}}(x) \xrightarrow{\text{Resampling}} p(x) \approx \frac{1}{N} \sum_{i=1}^N \delta_{x'^{(i)}}(x)
+$$
+
+Benefits: limit the degeneracy of the importance weights over time -- all probability mass becomes concentrated on a few particles, which makes the estimates unreliable.
+
+\subsection*{Sequential Monte Carlo}
+Given a collection of samples ('particles'), the filtering density is approximated as 
+$$
+p(x_t | y_{1:t}) \approx \sum_{i=1}^N \delta_{x_t^{(i)}}(x_t), \quad x_t^{(i)} \overset{\text{i.i.d.}}{\sim} p(x_t | y_{1:t}), \quad i = 1, \dots, N
+$$
+
+Prediction step:
+\begin{align*}
+p(x_{t+1} | y_{1:t}) &= \int f(x_{t+1} | x_t) p(x_t | y_{1:t}) dx_t \\
+&\approx \int f(x_{t+1} | x_t) \frac{1}{N} \sum_{i=1}^N\delta_{x_t^{(i)}}(x_t) dx_t \\
+&= \frac{1}{N} \sum_{i=1}^N f(x_{t+1} | x_t^{(i)})
+\end{align*}
+
+Update step:
+$$
+p(x_{t+1} | y_{1:t+1})  = \frac{g(y_{t+1} | x_{t+1}) p(x_{t+1} | y_{1:t})}{p(y_{t+1} | y_{1:t})} \approx \frac{1}{N} \frac{g(y_{t+1} | x_{t+1}) \sum_{i=1}^N f(x_{t+1} | x_t^{(i)})}{p(y_{t+1} | y_{1:t})}
+$$
+
+Samples can be drawn from the Monte Carlo approximation to $p(x_{t+1} | y_{1:t+1})$ by many means, including rejection sampling (slow but exact), importance sampling (most common), MCMC (effective but slow), annealed importance sampling etc.
+
+\subsection*{Sequantial Updating}
+Step 1: Generate a new state from the steate transition density for each particle:
+$$x_{t+1}^{(i)} \sim f(x_{t+1} | x_t^{(i)})$$
+Each pair of particles $(x_t^{(i)}, x_{t+1}^{(i)})$ is a sample from the joint density $p(x_t, x_{t+1} | y_{1:t})$, while the marginal density of $x_{t+1}^{(i)}$ is $p(x_{t+1} | y_{1:t})$.
+
+Step 2: Update the importance weights for each particle, with sampling proposals $q(x_{t+1}) = p(x_{t+1} | y_{1:t})$:
+\begin{align*}
+w_{t+1} &\propto \frac{p(x_{t+1} | y_{1:t+1})}{q(x_{t+1})} \\
+&\propto \frac{g(y_{t+1} | x_{t+1}) p(x_{t+1} | y_{1:t})}{p(y_{t+1} | y_{1:t}) p(x_{t+1} | y_{1:t})} \\
+&\propto g(y_{t+1} | x_{t+1})
+\end{align*}
+
+Step 3 (No resampling): The distribution is weighted:
+$$p(x_t | y_{1:t}) \approx \sum_{i=1}^N w_t^{(i)} \delta_{x_t^{(i)}}(x_t)$$
+Selecting the particles one-by-one is equivalent to sampling from a proposal distribution $q(x_t) \propto \frac{p(x_t | y_{1:t})}{w_t}$. Hence, the importance weight needs to include $w_t$:
+$$
+w_{t+1} \propto w_t \, g(y_{t+1} | x_{t+1})
+$$
+
+Step 3 (Resampling): For each particle, set $x_{t+1}'^{(i)} = x_{t+1}^{(j)}$ with probability $w_{t+1}^{(j)}$ and set $w_{t+1}'^{(i)} = \frac{1}{N}$.
+The resulting distribution is unweighted:
+$$p(x_t | y_{1:t}) \approx \frac{1}{N} \sum_{i=1}^N \delta_{x_t^{(i)}}(x_t)$$
+
+\subsection*{General Sequential Importance Sampling}
+Generate a new state from a specially designed proposal distribution $q(x_t,x_{t+1} | y_{1:t+1})$ rather than the state transition density $f(x_{t+1} | x_t)$ (Bootstrap proposal):
+\begin{align*}
+q(x_t, x_{t+1} | y_{1:t+1}) &= q(x_{t+1} | x_t, y_{1:t+1}) p(x_t | y_{1:t}) \\
+p(x_t, x_{t+1} | y_{1:t+1}) &= \frac{g(y_{t+1} | x_{t+1}) f(x_{t+1} | x_t) p(x_t | y_{1:t})}{p(y_{t+1} | y_{1:t})}
+\end{align*}
+
+The importance weight is given by:
+\begin{align*}
+w_{t+1} &\propto \frac{p(x_t, x_{t+1} | y_{1:t+1})}{q(x_t, x_{t+1} | y_{1:t+1})} \\
+&= \frac{g(y_{t+1} | x_{t+1}) f(x_{t+1} | x_t) p(x_t | y_{1:t})}{p(y_{t+1} | y_{1:t}) q(x_{t+1} | x_t, y_{1:t+1}) p(x_t | y_{1:t})} \\
+&\propto \frac{g(y_{t+1} | x_{t+1}) f(x_{t+1} | x_t)}{q(x_{t+1} | x_t, y_{1:t+1})}
+\end{align*}
+
+If resampling is not carried out, weights are accumulated over time:
+$$w_{t+1} \propto w_t\, \frac{g(y_{t+1} | x_{t+1}) f(x_{t+1} | x_t)}{q(x_{t+1} | x_t, y_{1:t+1})}$$
+
+Important special cases:
+\begin{itemize}
+\item Bootstrap filter: $q(x_{t+1} | x_t, y_{1:t+1}) = f(x_{t+1} | x_t)$
+\item Sequential computations: $q(x_{t+1} | x_t, y_{1:t+1}) = p(x_{t+1} | x_t, y_{t+1})$
+\end{itemize}
+
+\end{document}
