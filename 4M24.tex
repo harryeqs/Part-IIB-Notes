@@ -1,0 +1,460 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+\usepackage[T1]{fontenc}
+\usepackage{palatino}
+\usepackage{amsmath, amssymb}
+\usepackage{array}
+\usepackage{titling}
+
+\setlength{\droptitle}{-5em}
+\preauthor{\begin{center}\large\vspace{0.5em}}
+\postauthor{\end{center}\vspace{-0.5em}}
+
+\title{
+    {\scshape  Part IIB Revision Notes} \\ 
+    \vspace{0.5em}
+    \textbf{\fontsize{18}{22}\selectfont 4M24: Computational Statistics and Machine Learning}}
+\author{Qianshuo (Harry) Ye}
+\date{April 2026}
+
+\usepackage{parskip}
+\begin{document}
+\maketitle
+
+\section{Monte Carlo Methods}
+\textbf{Central limit theorem for Monte Carlo:} The Monte Carlo estimate follows
+$$
+\frac{1}{N}\sum_n f(x_n) \sim \mathcal{N}\left( \mathbb{E}[f(x)], \frac{\sigma_f^2}{N} \right) \text{ as } N \to \infty
+$$
+where $\sigma_f^2$ is the variance of $f(x)$.
+
+\textbf{Importance sampling:} use another probability density $q(x)$ that satisfy $q(x) \neq 0$ when $f(x) \neq 0$ to sample $x$. The expectation can be rewritten as
+\begin{align*}
+    \mathbb{E}_p[f(x)] &= \int f(x) p(x) dx \\
+    &= \int f(x) \frac{p(x)}{q(x)} q(x) dx \\
+    &= \mathbb{E}_q \left[ f(x) \frac{p(x)}{q(x)} \right]
+\end{align*}
+
+The orginal Monte Carlo estimate $\frac{1}{N} \sum_n f(x_n)$ with each $x_n \sim p(x)$ becomes $\frac{1}{N} \sum_n f(x_n) \frac{p(x_n)}{q(x_n)}$ with each $x_n \sim q(x)$. The difference in variances is
+$$
+\sigma_f^2 - \sigma_{\bar{f}}^2 = \int f(x)^2 p(x) dx - \int f(x)^2 \frac{p(x)^2}{q(x)} dx
+$$
+
+The biggest decrease in variance is achived when $q(x) \propto |f(x)| p(x)$.
+
+\textbf{Control variates:} use another function $g(x)$ with known expectation $\mathbb{E}[g(x)]$ to reduce the variance of the Monte Carlo estimate. The new estimator is
+$$
+\hat{E}_f^c = \hat{E}_f + c (\hat{E}_g - \mathbb{E}[g(x)])
+$$
+where $\hat{E}_f$ and $\hat{E}_g$ are the Monte Carlo estimates of $f(x)$ and $g(x)$, respectively.
+
+The optimal value of $c$ is
+$$
+c^* = -\frac{\text{Cov}(\hat{E}_f, \hat{E}_g)}{\text{Var}(\hat{E}_g)}
+$$
+
+For multiple control variates, the estimator is $\hat{E}_f^c = \hat{E}_f + \sum_i c_i (\hat{E}_{g_i} - \mathbb{E}[g_i(x)])$, and the optimal coefficients are $\mathbf{c}^* = -C^{-1} \mathbf{b}$, where $C$ is the covariance matrix of $\hat{E}_{g_i}$ and $\mathbf{b}$ is the covariance vector between $\hat{E}_f$ and $\hat{E}_{g_i}$.
+
+\section{Lebesgue Integral and Measure}
+\textbf{Riemann integral:} Define two summations for a function $f$ on an interval $[a, b]$ and $\Delta x_k = [x_k, x_{k+1}]$:
+\begin{align*}
+    S_p(x) &= \sum_{k=1}^n M_k (x_{k+1} - x_k) \text{ with } M_k = \sup_{x \in \Delta x_k} f(x) \\
+    s_p(x) &= \sum_{k=1}^n m_k (x_{k+1} - x_k) \text{ with } m_k = \inf_{x \in \Delta x_k} f(x) \\
+\end{align*}
+Define the limit of the summations as $n \to \infty$: $S(f) = \liminf_{n \to \infty} S_p(x), s(f) = \limsup_{n \to \infty} s_p(x)$.
+If $S(f) = s(f) = A$, then $A$ is the Riemann integral $\int_a^b f(x) dx$.
+
+Limitations:
+\begin{itemize}
+    \item The function must be continuous almost everywhere.
+    \item The construction of the integral requires a parition of the domain.
+    \item The exchange of limit and integral is not always valid.
+\end{itemize}
+
+\textbf{Convergence of functions:}
+\begin{itemize}
+    \item Pointwise convergence: Given $\epsilon > 0$, there exists a natural number $N(\epsilon, x)$ such that for $n > N$, $|f_n(x) - f(x)| < \epsilon$. Does not preserve continuity.
+    \item Uniform convergence: Given $\epsilon > 0$, there exists a natural number $N(\epsilon)$ such that for $n > N$, $|f_n - f| < \epsilon, \forall x \in D$. Preserves continuity.
+\end{itemize}
+
+\textbf{Lebesgue integral:} Partition the range of the function instead of the domain. For $0 \leq f_\text{min} \leq f(x) \leq f_\text{max}$, the range is partitioned into $f_\text{min} = f_1, f_2, \dots, f_n = f_\text{max}$. For each $f_k$, there are sets of values $X_k$ such that $f_k \leq f(x) < f_{k+1}$ for $x \in X_k$, and the size (measure) of each set is $\mu(X_k)$.
+
+The Lebesgue integral is the limiting value of the sum:
+$$\int f d\mu = \lim_{n \to \infty} \sum_{k=1}^n f_k \mu(X_k) = \lim_{n \to \infty} \sum_{\max |f_k - f_{k-1}| \to 0}^n f_k \mu(X_k)$$
+Advantages:
+\begin{itemize}
+    \item Only requires a measure of sets on the domain of integration -- more general
+    \item Change of order of limit and integration only requires pointwise convergence.
+    \item A Riemann integrable funcion is also Lebesgue integrable, but not vice versa.
+\end{itemize}
+
+\textbf{Measure of sets:} A set $X$ and a set $\Sigma$ generated from $X$ (contains $X$, $\emptyset$, and other subsets of $X$) defines a \textit{measurable set} $\{X, \Sigma\}$. Along with a measure $\mu$ it defines a \textit{measure space} $\{X, \Sigma, \mu\}$.
+
+Rules for measure:
+\begin{itemize}
+    \item If $\mu(E) \geq 0$ for all $E \in \Sigma$, all elements in $\Sigma$ are measurable.
+    \item $\mu(\emptyset) = 0$.
+    \item If $E_i \subseteq E_j$, then $\mu(E_i) \leq \mu(E_j)$.
+    \item $\mu \left(\bigcup_{i=1}^\infty E_i\right) = \sum_{i=1}^\infty \mu(E_i)$ for disjoint sets $E_i \in \Sigma$.
+    \item If $(X, \Sigma_X)$ and $(Y, \Sigma_Y)$ are both measureable, then a function $f: X \to Y$ is measurable if $f^{-1}(B) \in \Sigma_X$ for all $B \in \Sigma_Y$.
+\end{itemize}
+
+\textbf{Lebesgue measure:}
+\begin{itemize}
+    \item For a continuous line segment on $\mathbb{R}$, the Lebesguemeasure is the length of the segment. e.g. $I = [a, b]$, $\mu(I) = b - a$.
+    \item The Lebesgue measure of a single point is zero. By additivity, the Lebesgue measure for the set of rational numbers $\mu(\mathbb{Q}) = 0$.
+    \item The Lebesgue meausre of countable sets (any set that can be put into a one-to-one correspondence with the set of integers $\mathbb{Z}$) is zero.
+\end{itemize}
+
+\textbf{Probability measures:} The probability space $\{\Omega, \mathcal{F}, P\}$ consists of three elements:
+\begin{itemize}
+    \item Sample space $\Omega$: the set of all possible outcomes.
+    \item $\sigma$-algebra $\mathcal{F}$: certain subsets of $\Omega$ with outcomes to be considered.
+    \item Probability measure $P$: a function that assigns a probability to each event in $\mathcal{F}$, satisfying $P(\Omega) = 1$ and countable additivity.
+\end{itemize}
+
+\textbf{Random variables:} For a probability space $\{\Omega, \mathcal{F}, P\}$ and a measurable space $\{E, \mathcal{E}\}$, there is an associated measurable function $X: \Omega \to E$ that satisfies $X^{-1}(B) \in \mathcal{F}$ for all $B \in \mathcal{E}$. 
+If $E = \mathbb{R}$, then $X: \Omega \to \mathbb{R}$ is a real-valued \textit{random variable} such that $\{\omega \in \Omega : X(\omega) \leq r\} \in \mathcal{F}$ for every $r \in \mathbb{R}$.
+
+The expectation of a random variable $X$ is defined as $\mathbb{E}[X] = \int_\Omega X(\omega) dP(\omega)$.
+
+\textbf{Radon-Nikodym theorem:} Consider two measures $\mu$ and $\nu$ on a measurable space $\{X, \Sigma\}$. If for every $A \in \Sigma$ where $\nu(A) = 0$ also have $\mu(A) = 0$, then $\mu$ is absolutely continuous with respect to $\nu$, denoted as $\mu \ll \nu$.
+
+Given a probability mesure $P$, a new probability measure $Q$ can be defined if there exists a function $L(\omega)$ such that $dQ(\omega) = L(\omega) dP(\omega)$.
+
+For any measurable set $B$, $Q(B) = \int_B L(\omega) dP(\omega)$ is the probability of $B$ under the new measure $Q$.
+
+The expectation of a function $F(\omega)$ can be computed as
+$$
+\int_\Omega F(\omega) dQ(\omega) = \int_\Omega F(\omega) L(\omega) dP(\omega)
+$$
+where the function $L(\omega) = \frac{dQ(\omega)}{dP(\omega)}$ is the Radon-Nikodym derivative, subject to (1) $L(\omega) \geq 0$ for all $\omega \in \Omega$ and (2) $\int_\Omega L(\omega) dP(\omega) = 1$.
+
+For a random variable $X$ on $\mathbb{R}$, the probability of a small neighborhood $B$ around the outcome $X = x \in \mathbb{R}$ is $\int_B dP = \int_B L(x) d\mu(x) = \int_B L(x) dx$. The function $L(x) = \frac{dP(x)}{dx}$ is the probability density function of $P$ with respect to the Lebesgue measure.
+
+\section{Markov Chain Monte Carlo}
+\textbf{Probability inversion:} For data $\mathbf{x} \in \mathcal{X}$ and parameters $\boldsymbol{\theta} \in \Theta$, the posterior distribution is
+$
+\pi (\boldsymbol{\theta} | \mathbf{x}) = \frac{p(\mathbf{x} | \boldsymbol{\theta}) \pi_0(\boldsymbol{\theta})}{\int_\Theta p(\mathbf{x} | \boldsymbol{\theta}) \pi_0(\boldsymbol{\theta}) d\boldsymbol{\theta}}
+$.
+Inference requires integration with respect to the posterior
+$$
+I(\boldsymbol{\theta}) = \mathbb{E}_{\boldsymbol{\theta} | \mathbf{x}}[f(\boldsymbol{\theta})] = \int_\Theta f(\boldsymbol{\theta}) \pi(\boldsymbol{\theta} | \mathbf{x}) d\boldsymbol{\theta}
+$$
+The Monte-Carlo estimate is 
+$$
+\hat{I}_N(\boldsymbol{\theta}) = \frac{1}{N} \sum_{n=1}^N f(\boldsymbol{\theta}_n) \text{ with } \boldsymbol{\theta}_n \sim \pi(\boldsymbol{\theta} | \mathbf{x})
+$$
+The estimator is unbiased and consistent as $N \to \infty$, $\hat{I}_N(\boldsymbol{\theta}) \to I(\boldsymbol{\theta})$ and the error $\sqrt{N} (\hat{I}_N(\boldsymbol{\theta}) - I(\boldsymbol{\theta})) \to \mathcal{N}(0, \sigma_f^2)$.
+
+\textbf{Markov chains:} stochastic transitions governed by the Markov property
+$$
+p(\boldsymbol{\theta}^{(i)} | \boldsymbol{\theta}^{(i-1)}, \dots, \boldsymbol{\theta}^{(1)}) = T(\boldsymbol{\theta}^{(i)} | \boldsymbol{\theta}^{(i-1)})
+$$
+\textit{Invariant distribution}: the Markov chain converges to the invariant distribution $\pi(\boldsymbol{\theta}^{(\infty)}) \to \pi(\boldsymbol{\theta})$ irrespective of the initial state.
+
+\textit{Irreducible:} the Markov chain can reach any state from any other state in a finite number of steps.
+
+\textit{Aperiodic:} the Markov chain does not get trapped in cycles.
+
+\textit{Detailed balance (reversible):} a Markov chain satisfies detailed balance if $\pi(\boldsymbol{\theta}^{(i)}) T(\boldsymbol{\theta}^{(i-1)} | \boldsymbol{\theta}^{(i)}) = \pi(\boldsymbol{\theta}^{(i-1)}) T(\boldsymbol{\theta}^{(i)} | \boldsymbol{\theta}^{(i-1)})$.
+
+\subsection{Metropolis-Hastings Algorithm}
+Define the \textit{transition kernel} as
+$$
+\underbrace{P(x, dy)}_{\text{prob. of transition from } x \text{ to } dy} = \underbrace{p(x,y) dy}_{\text{prob. of moving to $dy$ around $y$}} + \underbrace{r(x) \delta_x(dy)}_{\text{prob. of staying at } x}
+$$
+where $r(x) = 1 - \int p(x,y) dy$ is the probability of staying at $x$.
+
+If $p(x,y)$ satisfies detailed balance $\pi(x)p(x,y) = \pi(y)p(y,x)$, then $\pi(\cdot)$ is the invariant density of the transition kernel $P(x, \cdot)$. To achieve this, the \textit{proposal density} $q(x,y)$ is balanced with an \textit{acceptance probability} that satisfies $\pi(x)q(x,y)\alpha(x,y) = \pi(y)q(y,x)\alpha(y,x)$.
+
+The Metropolis-Hastings algorithm have $p_\text{MH}(x,y) = q(x,y) \alpha(x,y)$ for $x \neq y$ with the acceptance probability
+$$
+\alpha(x,y) = \min \left(1, \frac{\pi(y) q(y,x)}{\pi(x) q(x,y)} \right)
+$$
+\textbf{Overall:} Simulate $y$ from the proposal density $q(x^{(i)},y)$ and accept the move with probability $\alpha(x^{(i)},y)$. If the proposed move is accepted, the next state is $x^{(i+1)} = y$. If the proposed move is rejected, the current value is repeated as the next state, i.e. $x^{(i+1)} = x^{(i)}$. 
+
+For symmetric proposal density $q(x,y) = q(y,x)$, the acceptance probability simplifies to $\alpha(x,y) = \min \left(1, \frac{\pi(y)}{\pi(x)} \right)$: move to higher density regions are always accepted.
+
+\subsection{Gibbs Sampling}
+\textbf{Product transition kernels:} the product kernel $P_1(x_1, dy_1,| x_2)P_2(x_2, dy_2 | y_1)$ has invariant density $\pi(y_1, y_2)$ if:
+\begin{itemize}
+\item the conditional kernel $P_1(x_1, dy_1 | x_2)$ has invariant density $\pi_{1|2}(\cdot | x_2)$ for fixed $x_2$
+\item the conditional kernel $P_2(x_2, dy_2 | x_1)$ has invariant density $\pi_{2|1}(\cdot | x_1)$ for fixed $x_1$.
+\end{itemize}
+
+\textbf{Gibbs sampler:} set $P_1(x_1, dy_1 | x_2) = \pi^*_{1|2}(dy_1 | x_2)$ and $P_2(x_2, dy_2 | x_1) = \pi^*_{2|1}(dy_2 | x_1)$. For the move of $x_1$ with $x_2$ fixed, use exact conditional densities as the proposal denisites, i.e. $q([x_1, x_2], [y_1, y_2]) = \pi(y_1 | x_2)$ and $q([y_1, y_2],[x_1, x_2]) = \pi(x_1 | y_2)$. As a result, the acceptance probability is $\alpha = 1$ for all moves.
+
+Limitation: small step sizes and poor mixing if the components are highly correlated.
+
+\textbf{Mixture transition kernels:} mixing transitional kernels that have the same invariant density, i.e. $P(x, dy) = \sum_i w_i P_i(x, dy)$ with $\sum_i w_i = 1$.
+
+Advantage: for multimodal distributions, the mixture kernel can have better mixing properties by combining local and global moves.
+
+\subsection{Data Augmentation}
+Augment a target density $\pi(\theta)$ with $\phi$ to form $\pi(\theta, \phi)$. Draw samples $\theta^{(n)}, \phi^{(n)} \sim \pi(\theta, \phi)$, then for each $\theta^{(n)}$ it follows $\int \pi(\theta^{(n)}, \phi) d\phi = \pi(\theta^{(n)})$.
+\section{Vector, Metric and Banach Spaces}
+\textbf{Vector space $V$:} a collection of vectors $x$ with axioms (group):
+\begin{itemize}
+    \item $x + y = y + x$ (commutativity)
+    \item $(x + y) + z = x + (y + z)$ (associativity)
+    \item There exists a zero vector such that $x + 0 = x$ for all $x$
+    \item For each $x$, there exists an additive inverse such that $x + (-x) = 0$
+    \item For $\alpha \in \mathbb{F}$, $\alpha x \in V$ for all $x \in V$ (scalar multiplication is closed)
+    \item $\alpha (x + y) = \alpha x + \alpha y$ (distributivity)
+    \item $\alpha (\beta x) = (\alpha \beta) x$ (associativity of scalar multiplication)
+    \item $0 \times x = 0, 1 \times x = x$
+\end{itemize}
+
+\textbf{Inner product space:} space with an inner product $\langle \cdot, \cdot \rangle: V \times V \to \mathbb{F}$ satisfying:
+\begin{itemize}
+    \item $\langle x, y \rangle = \overline{\langle y, x \rangle}$
+    \item $\langle \alpha x + \beta y, z \rangle = \alpha \langle x, z \rangle + \beta \langle y, z \rangle$ for $\alpha, \beta \in \mathbb{R}$
+    \item $\langle x,x \rangle \geq 0$ and $\langle x,x \rangle = 0$ if and only if $x = 0$
+    \item For $a, b \in \mathbb{C}^n, \langle a, b \rangle = \sum_{i=1}^n a^*_i b_i$
+\end{itemize}
+Inner product of functions: $\langle f, g \rangle = \int^b_a f(x) g(x) dx$ for $x \in [a,b] \in \mathbb{R}$.
+
+\textbf{Vector norm:} the length of a vector, defined as $\|x\| = \sqrt{\langle x, x \rangle}$. The norm satisfies:
+\begin{itemize}
+    \item Schwarz inequality: $|\langle x, y \rangle| \leq \|x\| \|y\|$
+    \item Triangle inequality: $\|x + y\| \leq \|x\| + \|y\|$
+    \item Parallelogram law: $\|x + y\|^2 + \|x - y\|^2 = 2(\|x\|^2 + \|y\|^2)$
+\end{itemize}
+
+\textbf{Orthogonality:} two elements $x$ and $y$ are orthogonal if $\langle x, y \rangle = 0$. e.g. $\sin(x)$ and $\cos(x)$ are orthogonal on $[-\pi, \pi]$.
+
+\textbf{Orthonormal basis:} a finite set of linearly independent, orthogonal unit vectors with which every vector can be expressed as $x = \sum_{i=1}^n \alpha_i e_i$.
+
+\textbf{Cauchy sequence:} a sequence of vectors $\{x_n\}$ is a Cauchy sequence if for any $\epsilon > 0$, there exists a natural number $N$ such that for all $m, n > N$, $\|x_n - x_m\| < \epsilon$.
+
+If every Cauchy sequence in a vector space converges to a limit that is also in the vector space, then the vector space is \textit{complete}.
+
+\textbf{Metric vector space:} a vector space with a distance function $\rho(x,y)$ that maps two vectors to a non-negative real number, satisfying:
+\begin{itemize}
+    \item $\rho(x,y) = 0$ if and only if $x = y$
+    \item $\rho(x,y) = \rho(y,x)$ (symmetry)
+    \item $\rho(x,z) \leq \rho(x,y) + \rho(y,z)$ (triangle inequality)
+\end{itemize}
+
+\textbf{Normed space:} a metric space with distance function $\rho(x,y) = \|x - y\|$ induced by a non-negative norm $\|\cdot\|$.
+
+\textbf{Banach space:} a complete normed space. All finite-dimensional normed spaces are Banach spaces.
+
+The $l_p$ space is a Banach space where $\sum_{i=1}^\infty |x_i|^p < \infty$ for $p \geq 1$, and the norm is the $l^p$ norm $\|x\|_p = \left( \sum_{i=1}^n |x_i|^p \right)^{1/p}$.
+
+The $L_p$ space is a Banach space where $\int_a^b |f(x)|^p dx < \infty$, where $x$ is the Lebesgue measure. The norm is the $L^p$ norm $\|f\|_p = \left( \int_a^b |f(x)|^p dx \right)^{1/p}$.
+
+\section{Hilbert Spaces}
+\textbf{Pre-Hilbert space:} an incomplete inner product space.
+
+\textbf{Hilbert space:} a complete inner product space. For any $f$ in a Hilbert space with an infinite set of orthonormal vectors $\{e_i\}$,
+$$
+\{e_i\} \text{ is complete} \iff \|f\|^2 = \sum_{i=1}^\infty |\langle f, e_i \rangle|^2 \quad \text{(Parseval's identity)}
+$$
+
+$l^2$ and $L^2$ spaces are both Hilbert spaces.
+
+\textbf{Equivalence of $l^2$ and $L^2$ spaces:} a function $f \in L^2$ can be represented with a sequence $\{c_k = \langle f, \phi_k \rangle\} \in l^2$ by Fourier series
+$$
+f = \sum_{k=1}^\infty c_k \phi_k
+$$
+where $\{\phi_k\}$ is an orthonormal basis of $L^2$. 
+
+$l^2$ and $L^2$ are isomorphic, i.e. there is a one-to-one correspondence between the elements of $l^2$ and $L^2$. $l^2$ is a coordinate system for $L^2$.
+
+\textbf{Reproducing kernel Hilbert space (RKHS):} a Hilbert space of functions where point evaluation is continuous i.e. functions close in norm are also close pointwise.
+
+The \textit{reproducing kernel function} $K_x = K(x,y)$ reproduces function evaluation by inner product $f(x) = \langle f, K_x \rangle$. The kernel function is symmetric and positive definite, and uniquely defines the RKHS.
+
+\textbf{Function approximation in RKHS:} Given data $\{(x_i, y_i)\}_{i=1}^n$ where $y_i = f(x_i)$, the regularised empicical error
+$$
+\frac{1}{N}\sum_{n=1}^N |y_i - f(x_i)|^2 + \lambda \|f\|^2
+$$
+is minimised by functions of the form
+$$\hat{f}(\cdot) = \sum_{n=1}^N \alpha_n K(x_n, \cdot)$$
+where $\alpha = (K + N \lambda I)^{-1} y$ and $K$ is the kernel matrix with $K_{ij} = K(x_i, x_j)$. The term $\lambda \|f\|^2$ penalises the complexity of the function and prevents overfitting.
+
+\section{Sobolev Spaces}
+\textbf{Sobolev space:} a Sobolev space $W^k_p(\Omega)$ is a Banach space where functions $f \in L^p(\Omega)$ have \textit{weak derivatives} $D^s f \in L^p(\Omega)$ for $0 \leq s \leq k$. The norm is defined as
+$$
+\|f\|_{W^k_p} = \left( \sum_{s=0}^k \int_\Omega |D^s f(x)|^p \, dx \right)^{1/p}
+$$
+
+For $p = 2$, the Sobolev space $W^k_2(\Omega)$ is a Hilbert space with inner product
+$$
+\langle f, g \rangle_{W^k_2} = \sum_{s=0}^{k} \langle D^s f, D^s g \rangle = \sum_{s=0}^k \int_\Omega D^s f(x) D^s g(x) \, dx
+$$
+The norm and the inner product in $W^k_2(\Omega)$ encodes the smoothness of function.
+
+\textbf{Weak derivatives:} for functions $f: [0,1] \to \mathbb{R}$, a function $h: [0,1] \to \mathbb{R}$ is a weak derivative of $f$ if for every differentiable function $g: [0,1] \to \mathbb{R}$ with $g(0) = g(1) = 0$,
+$$
+\int_0^1 f(x) g'(x) dx = -\int_0^1 h(x) g(x) dx
+$$
+
+\textbf{Function approximation by polynomial expansion:} By Fourier expansion, functions from the set $C_2[-\pi, \pi] = C[-\pi, \pi] \cap L^2[-\pi, \pi]$ can be presented as $f(x) = \sum_{k=0}^\infty c_k \exp(ikx)$ with $c_k = \frac{1}{\pi} \int_0^{-\pi} f(x) \exp(-ikx) dx$. The $L^2$ norm of $f$ is $\|f\|^2 = \sum_{k=0}^\infty c_k^2$.
+
+The approximating functions $f_n(x) = \sum^n_{k=0} c_k \exp(ikx)$ are in the Sobolev space $W^s_2$ with the norm
+$\|f\|^2_{W^s_2} = \| D^s f \|^2_{L^2} = \sum_{k=0}^\infty k^{2s} c_k^2$.
+
+The appoximation error is bounded
+$$
+\|f - f_n\|^2_{L^2} = \sum_{k=n+1}^\infty c_k^2 < \frac{1}{n^{2s}} \|f\|^2_{W^s_2}
+$$
+as $s$ increases, the approximation error decreases faster with increasing $n$.
+
+For $d$-dimensional domains, the error bound is $\|f - f_n\|^2_{L^2} < \frac{1}{n^{2s/d}} \|f\|^2_{W^s_2}$, which shows the curse of dimensionality -- convergence rate decreases as $d$ increases.
+
+\section{Gaussian Measures in Hilbert Space}
+\textbf{Lebesgue measure in $D$ dimensions:} $\mu = \prod_{d=1}^D \mu_d$.
+
+There is no Lebesgue measure in infinite dimensional Hilbert or Banach spaces.
+
+\textbf{Gaussian measure in infinite dimensions:} a Gaussian measure is a probability measure characterised by a mean function and a covariance operator.
+
+Diagonal covariance operator: $S_x = (a_n x_n)^{\infty}_{n=1}$ for $x \in l^2$ subject to $\sum_{k=1}^\infty a_k < \infty$.
+
+Full covariance operators: need to be trace class, i.e. $\text{Tr}(C) = \sum_{n=1}^\infty \langle e_k, C e_k \rangle < \infty$ for an orthonormal basis $\{e_k\}$. Given an covariance function $c(x,y)$
+$$
+C e_k(x) = \int c(x,y) e_k(y) dy
+$$
+
+\textbf{Gaussian measures in Hilbert space:} In a Hilbert space, two Gaussian measures are either equivalent or singular.
+
+\textit{Equivalent:} also known as mutually absolutely continuous, two measures $P$ and $Q$ are equivalent if $P(A) = 0$ if and only if $Q(A) = 0$ for any measurable set $A$.
+
+\textit{Singular:} two measures $P$ and $Q$ are singular if there exists a measurable set $A$ such that $P(A) = 1$ and $Q(A) = 0$.
+
+For two Gaussian measures $\mathcal{N}(0, C)$ and $\mathcal{N}(v, C)$ in $l^2$, two measures are equivalent if $v \in \text{Image}(C^{1/2})$ i.e. $v = C^{1/2} u$ for some $u \in l^2$, and singular otherwise. The subspace for $v$ is the Cameron-Martin space, also the reproducing kernel Hilbert space (RKHS).
+
+\textbf{Bayes' rule in Hilbert space}: The Radom-Nikodym derivative of the posterior probability measure with respect to the prior probability measure is given by
+$$
+\frac{d\mu^y}{d\mu^0} \propto \underbrace{P(y|x)}_{\text{likelihood}}
+$$
+In a infinite dimensional Hilbert space, the prior measure over functions is a Gaussian measure $\mu_0 = \mathcal{N}(m, C)$ -- formal definition of Gaussian Process prior.
+
+\section{MCMC in Infinite-Dimensional Spaces}
+\textbf{Metropolis-Hastings algorithm in infinite dimensions:} Define a proposal $$v = \sqrt{1-\beta^2} u + \beta\xi, \xi \sim \mathcal{N}(0, C)$$ such that $u$ and $v$ both follow $\mathcal{N}(0, C)$. Given a prior Gaussian measure $\mu^0 = \mathcal{N}(0, C)$ and a likelihood $P(y|v) = \exp(- \Phi(v))$,
+the acceptance probability (replacing $\pi(v)q(v, u)$ with $\mu^y(dv)q(dv, u)$, where $\mu^y$ is the posterior measure) is 
+$$\alpha(u,v) = \min\left(1, \frac{\mu^y(dv)q(dv, u)}{\mu^y(du)q(du, v)}\right) = \min\left(1, \frac{P(y|v)}{P(y|u)}\right) = \min\left(1, \exp(\Phi(u) - \Phi(v))\right)$$
+
+
+\section{Langevin Dynamics}
+\textbf{Langevin stochastic differential equation (SDE):} $$dX_t = -\nabla \log U(X_t) dt + \sqrt{2} dB_t = \nabla \log \pi(X_t) dt + \sqrt{2} dB_t$$
+where $U(\cdot): \mathbb{R}^d \to \mathbb{R}$ is a potential function, $B_t$ is the Brownian motion and $\pi(x) \propto \exp(-U(x))$ is the stationary distribution of the SDE.
+
+The measure of $X_t$, $\rho_t$, satisfies the Fokker-Planck equation
+$$
+\frac{\partial \rho_t}{\partial t} = \nabla \cdot (\rho_t \nabla \log \pi) + \Delta \rho_t
+$$
+with asymptotic solution $\rho_\infty = \pi$.
+
+\textbf{Log-concave}: A probability measure with density $\pi$ is log-concave if
+$$
+\pi(\lambda x + (1-\lambda) y) \geq \pi(x)^\lambda \pi(y)^{1-\lambda} \text{ for } 0 < \lambda < 1
+$$
+A probability measure with density $\pi$ is m-strongly log-concave if
+$$
+\pi(\lambda x + (1-\lambda) y) \geq \pi(x)^\lambda \pi(y)^{1-\lambda} \exp\left( \frac{m}{2} \lambda (1-\lambda) \|x-y\|^2 \right) \text{ for } 0 < \lambda < 1
+$$
+i.e. there are no flat regions and the maximum is unique.
+
+\textbf{Convergence of Langevin dynamics:} For an m-strongly log-concave $\pi$, the convergence rate to the stationary measure is exponentially fast
+$$
+W_2(\rho_t, \pi) \leq e^{-mt} \left\{\|x - x^*\| + \left(\frac{d}{m}\right)^\frac{1}{2}\right\}
+$$,
+for $\pi_0 = \delta_x$ and $x^* = \arg\max_x \pi(x)$.
+
+\textbf{Metropolis-adjusted Langevin algorithm (MALA):} Given a state of the Markov chain $X_k$, propose a new state $\bar{X}_{k+1}$ by first-order Euler discretisation with step size $\gamma$:
+$$
+\bar{X}_{k+1} = X_k + \gamma \nabla \log \pi(X_k) + \sqrt{2\gamma} W_k, W_k \sim \mathcal{N}(0, I)
+$$
+To correct the discretisation bias, accept the proposed move with probability
+\begin{align*}
+\alpha(X_k, \bar{X}_{k+1}) &= \min\left(1, \frac{\pi(\bar{X}_{k+1}) q(\bar{X}_{k+1}| X_k)}{\pi(X_k) q(X_k| \bar{X}_{k+1})}\right) \\
+\text{where } q(\bar{X}_{k+1}| X_k) &\propto \exp\left(-\frac{1}{4\gamma} \|\bar{X}_{k+1} - X_k - \gamma \nabla \log \pi(X_k)\|^2\right)
+\end{align*}
+
+Limitation: the acceptance probability is exponentially low for high dimension, leading to poor mixing.
+
+\textbf{Unadjusted Langevin algorithm (ULA):} Run the first-order Euler discretisation without the Metropolis-Hastings correction, i.e. $X_{k+1} = X_k + \gamma \nabla \log \pi(X_k) + \sqrt{2\gamma} W_k$. The stationary distribution is a biased distribution $\pi_\gamma$, with asymptotic bias of order $\mathcal{O}(\gamma^\frac{1}{2})$.
+
+\textbf{Langevin schemes for Bayesian inference:} For a target distribution $\pi(x) \propto p(x)\prod_{i=1}^n p(y_i|x)$, where $p(x)$ is the prior and $p(y_i|x)$ is the likelihood for data vector $y_i$, samples can be generated from
+$$
+X_{k+1} = X_k + \gamma \left(\nabla \log p(X_k) + \sum_{i=1}^n \nabla \log p(y_i|X_k)\right) + \sqrt{2\gamma} W_k
+$$
+
+For MALA, the complexity is $\mathcal{O}(n)$ for both the gradient and the acceptance probability (can be avoided in ULA) computation. 
+
+\textbf{Stochastic gradient Langevin dynamics (SGLD)}: An unbiased estimate of the gradient can be computed more efficiently by subsampling the data. At each iteration $k$, choose a random index set $\mathcal{I}_k \subset \{1, \dots, n\}$ and approximate the gradient
+$$
+\nabla \widehat{\log \pi(X_k)} = \nabla \log p(X_k) + \frac{n}{|\mathcal{I}_k|} \sum_{i \in \mathcal{I}_k} \nabla \log p(y_i|X_k)
+$$
+The complexity is $\mathcal{O}(|\mathcal{I}_k|)$, and convergence rate is similar to ULA.
+
+\section{Energy-Based and Score-Based Models}
+\textbf{Generative models:} approximate the data distribution $p_\text{data}$ with a model distribution $p_\theta$, by learning parameters $\theta$ from data $\mathcal{D} = \{x_i\}_{i=1}^N$ drawn from $p_\text{data}$. 
+
+\textbf{Energy-based models (EBMs):} The probability of a state $x$ is defined as 
+$$p(x) = \frac{1}{Z_\beta} \exp(-\beta E(x))$$
+where $E(x)$ is the energy function, $\beta$ is the inverse temperature and $Z_\beta = \int \exp(-\beta E(x)) dx$ is the partition function.
+EBMs paratermises the energy function, giving $p_\theta(x) \propto \exp(-E_\theta(x))$.
+
+The EBMs are trained via maximum likelihood or contrastive divergence.
+
+\textit{Maximum likelihood:} maximise the log-likelihood $\mathcal{L}(\theta) = \mathbb{E}_{x \sim p_\text{data}}[\log p_\theta(x)]$ via gradient methods, with gradient:
+$$
+\nabla_\theta \mathcal{L}(\theta) = - \mathbb{E}_{x \sim p_\text{data}}[-\nabla_\theta E_\theta(x)] + \underbrace{\mathbb{E}_{x \sim p_\theta}[-\nabla_\theta E_\theta(x)]}_{\nabla_\theta \log Z_\theta}
+$$
+Limitation: the second term requires sampling from the model distribution $p_\theta$, which is computationally expensive.
+
+\textit{Contrastive divergence:}
+\begin{enumerate}
+    \item For each $x_i$, initialise a MCMC chain with target distribution $p_\theta$ at $x_i^{(0)}$.
+    \item Run the MCMC chain for $k$ steps to obtain $x_i^{(k)}$.
+    \item Compute the gradient estimate
+    $$
+    \hat{\mathcal{L}} = - \frac{1}{N} \sum_{i=1}^N \left( -\nabla_\theta E_\theta(x_i^{(0)}) + \nabla_\theta E_\theta(x_i^{(k)}) \right)
+    $$
+    \item Update parameters $\theta \leftarrow \theta + \eta \hat{\mathcal{L}}$.
+\end{enumerate}
+Limitations: bias in the gradient estimate and MCMC can be very slow.
+
+\textbf{Score-based models:} Learn to match the score function $s_\theta(x) = \nabla_x \log p_\theta(x) = -\nabla_x E_\theta(x)$, bypassing the partition function.
+Trained by score matching, which minimises the Fisher divergence between $p_\text{data}$ and $p_\theta$:
+$$
+J(\theta) = \frac{1}{2} \mathbb{E}_{x \sim p_\text{data}}\left[\|s_\theta(x) - \underbrace{\nabla \log p_\text{data}(x)}_{\text{intractable}}\|^2\right]
+$$
+which can be rewritten as
+$$
+J_\text{SM}(\theta) = \mathbb{E}_{x \sim p_\text{data}}\left[\underbrace{\text{Tr}(\nabla_x s_\theta(x))}_{\text{expensive for high-dim.}} + \frac{1}{2} \|s_\theta(x)\|^2\right]
+$$
+
+\textit{Sliced score matching:} approximate the trace of the Jacobian by projecting the score function onto random directions $v \sim \mathcal{N}(0, I)$
+$$
+J_\text{SSM}(\theta) = \mathbb{E}_{x \sim p_\text{data}, v \sim \mathcal{N}(0, I)}\left[v^\top \nabla_x s_\theta(x) v + \frac{1}{2} \|s_\theta(x)\|^2\right]
+$$
+
+In practice, one sample of $v$ is used for each data point:
+$$
+\hat{J}_\text{SSM}(\theta) = \frac{1}{N} \sum_{i=1}^N \left[v_i^\top \nabla_x s_\theta(x_i) v_i + \frac{1}{2} \|s_\theta(x_i)\|^2\right]
+$$
+
+\textbf{Sampling from generative models:} use Langevin dynamics
+$$
+dx_t = s_\theta(x) dt + \sqrt{2} dB_t
+$$
+which have stationary distribution $p_\theta$. In practice, discretise the SDE with step size $\gamma$:
+$$
+x^{(k+1)} = x^{(k)} + \gamma s_\theta(x^{(k)}) + \sqrt{2\gamma} z^{(k)}, \quad z^{(k)} \sim \mathcal{N}(0, I)
+$$
+
+\textbf{Parallel tempering (replica exchange):} For $\pi(x) = \exp(-U(x))$, define the tempered (smoothed) distribution $\pi_\beta(x) = \exp(-\beta U(x))$ with inverse temperature $\beta$. 
+Run MCMC chains on multiple tempered distributions $\{\pi_{\beta_i}\}$ in parallel, and exchange samples between $i$-th and $j$-th chains with acceptance probability:
+$$
+\alpha = \min\left(1, \frac{\pi_{\beta_i}(x_t^j) \pi_{\beta_j}(x_t^i)}{\pi_{\beta_i}(x_t^i) \pi_{\beta_j}(x_t^j)}\right)
+$$
+
+\end{document}
