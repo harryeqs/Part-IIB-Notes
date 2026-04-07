@@ -168,7 +168,9 @@ $$
 $$
 where $r(x) = 1 - \int p(x,y) dy$ is the probability of staying at $x$.
 
-If $p(x,y)$ satisfies detailed balance $\pi(x)p(x,y) = \pi(y)p(y,x)$, then $\pi(\cdot)$ is the invariant density of the transition kernel $P(x, \cdot)$. To achieve this, the \textit{proposal density} $q(x,y)$ is balanced with an \textit{acceptance probability} that satisfies $\pi(x)q(x,y)\alpha(x,y) = \pi(y)q(y,x)\alpha(y,x)$.
+If $p(x,y)$ satisfies detailed balance $\pi(x)p(x,y) = \pi(y)p(y,x)$, then $\pi(\cdot)$ is the invariant density of the transition kernel $P(x, \cdot)$. In this case, the chain is \textit{reversible}, satisfiying
+$$P(y, dx) \pi(dy) = P(x, dy) \pi(dx)$$
+To achieve this, the \textit{proposal density} $q(x,y)$ is balanced with an \textit{acceptance probability} that satisfies $\pi(x)q(x,y)\alpha(x,y) = \pi(y)q(y,x)\alpha(y,x)$.
 
 The Metropolis-Hastings algorithm have $p_\text{MH}(x,y) = q(x,y) \alpha(x,y)$ for $x \neq y$ with the acceptance probability
 $$
@@ -294,7 +296,7 @@ $$
 \int_0^1 f(x) g'(x) dx = -\int_0^1 h(x) g(x) dx
 $$
 
-\textbf{Function approximation by polynomial expansion:} By Fourier expansion, functions from the set $C_2[-\pi, \pi] = C[-\pi, \pi] \cap L^2[-\pi, \pi]$ can be presented as $f(x) = \sum_{k=0}^\infty c_k \exp(ikx)$ with $c_k = \frac{1}{\pi} \int_0^{-\pi} f(x) \exp(-ikx) dx$. The $L^2$ norm of $f$ is $\|f\|^2 = \sum_{k=0}^\infty c_k^2$.
+\textbf{Function approximation by polynomial expansion:} By Fourier expansion, functions from the set $C_2[-\pi, \pi] = C[-\pi, \pi] \cap L^2[-\pi, \pi]$ can be presented as $f(x) = \sum_{k=0}^\infty c_k \exp(ikx)$ with $c_k = \frac{1}{2\pi} \int_{-\pi}^{\pi} f(x) \exp(-ikx) dx$. The $L^2$ norm of $f$ is $\|f\|^2 = \sum_{k=0}^\infty c_k^2$.
 
 The approximating functions $f_n(x) = \sum^n_{k=0} c_k \exp(ikx)$ are in the Sobolev space $W^s_2$ with the norm
 $\|f\|^2_{W^s_2} = \| D^s f \|^2_{L^2} = \sum_{k=0}^\infty k^{2s} c_k^2$.
@@ -336,9 +338,10 @@ $$
 In a infinite dimensional Hilbert space, the prior measure over functions is a Gaussian measure $\mu_0 = \mathcal{N}(m, C)$ -- formal definition of Gaussian Process prior.
 
 \section{MCMC in Infinite-Dimensional Spaces}
-\textbf{Metropolis-Hastings algorithm in infinite dimensions:} Define a proposal $$v = \sqrt{1-\beta^2} u + \beta\xi, \xi \sim \mathcal{N}(0, C)$$ such that $u$ and $v$ both follow $\mathcal{N}(0, C)$. Given a prior Gaussian measure $\mu^0 = \mathcal{N}(0, C)$ and a likelihood $P(y|v) = \exp(- \Phi(v))$,
-the acceptance probability (replacing $\pi(v)q(v, u)$ with $\mu^y(dv)q(dv, u)$, where $\mu^y$ is the posterior measure) is 
-$$\alpha(u,v) = \min\left(1, \frac{\mu^y(dv)q(dv, u)}{\mu^y(du)q(du, v)}\right) = \min\left(1, \frac{P(y|v)}{P(y|u)}\right) = \min\left(1, \exp(\Phi(u) - \Phi(v))\right)$$
+\textbf{Metropolis-Hastings algorithm in infinite dimensions:} Define a proposal $$v = \sqrt{1-\beta^2} u + \beta\xi, \xi \sim \mathcal{N}(0, C)$$ such that $u$ and $v$ both follow $\mathcal{N}(0, C)$. 
+Given a prior Gaussian measure $\mu^0 = \mathcal{N}(0, C)$ and a likelihood $P(y|v) = \exp(- \Phi(v))$,
+the acceptance probability (replacing $\pi(v)q(v, u)$ with $\mu^y(dv)q(u, dv)$, where $\mu^y$ is the posterior measure) is 
+$$\alpha(u,v) = \min\left(1, \frac{\mu^y(dv)q(v, du)}{\mu^y(du)q(u, dv)}\right) = \min\left(1, \frac{P(y|v)}{P(y|u)}\right) = \min\left(1, \exp(\Phi(u) - \Phi(v))\right)$$
 
 
 \section{Langevin Dynamics}
