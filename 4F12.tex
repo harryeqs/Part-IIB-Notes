@@ -268,8 +268,18 @@ The degree of freedom of the matrices are $n - 1$ as the scale factor is arbitra
     \includegraphics[width=0.6\textwidth]{figures/4F12/planar_transformation.png}
 \end{center}
 
-\textbf{Camera calibration:} The process of determining the projection matrix $\mathrm{P}$. Each point $(u_i, v_i)$ gives a pair of equations, so at least 6 points are needed to calibrate the camera.
-The equations can be solve by linear least squares, and the solution can be refined by non linear minimisation of errors (between measured and projected points):
+\textbf{Camera calibration:} The process of determining the projection matrix $\mathrm{P}$. Each point $(u_i, v_i)$ gives 2 equations, so at least 6 points are needed to calibrate the camera.
+
+The equations can be solve by linear least squares:
+\begin{itemize}
+    \item Arrange the equations in the form of $\mathrm{A} \mathbf{p} = 0$. 
+    \item $\mathbf{p}$ is the eigenvector corresponding to the smallest eigenvalue of the $A^\top A$, which minimises the Rayleigh quotient
+    $$
+    \lambda_1 \leq \frac{\mathbf{p}^\top \mathrm{A}^\top \mathrm{A} \mathbf{p}}{\mathbf{p}^\top \mathbf{p}} \leqq \lambda_{12}
+    $$
+\end{itemize}
+
+The solution can be refined by non-linear minimisation of errors (between measured and projected points):
 $$
 \min_{\mathrm{P}} \sum_i ((u_i - \hat{u}_i)^2 + (v_i - \hat{v}_i)^2)
 $$
@@ -277,15 +287,26 @@ Once $\mathrm{P}$ is known, decompose the $3\times 3$ submatrix into $\mathbf{K}
     p_{14} & p_{24} & p_{34}
 \end{bmatrix}^\top$.
 
-To calibrate the camera for viewing a plane, at least 4 points are needed, and for viewing a line, at least 3 points are needed.
+To calibrate the camera for viewing a plane, at least 4 points are needed; for viewing a line, at least 3 points are needed.
+
+\textbf{Recovery of world position:} The position of the point on the line can be uniquely determined by $u$. The position of the point on a plane can be determined by $u$ and $v$. The 3D position of the point cannot be uniquely determined by $u$ and $v$ alone -- it can only define a ray in space.
 
 \textbf{Image mosaicing:} Any two images of a general scene with the same camera centre (rotation only) are related by
 $$
 \tilde{\mathbf{w}}' = \mathbf{K} \mathrm{R} \mathbf{K}^{-1} \tilde{\mathbf{w}}
 $$
-A minimum of 4 image correspondences can be used to estimate the homography and stitch images together. The RANSAC algorithm can be used for robust fitting of the homography in presence of outliers.
+A minimum of 4 image correspondences can be used to estimate the homography and stitch images together.
 
-\textbf{Weak perspective projection:} When the depth of objects in the scene is small compared to their distance from the camera, the projection can be approximated as a parallel projection, with a weak prosepective projection matrix
+With many data ouliers, the homography can be estimated by RANSAC (RANdom SAmple Consensus):
+\begin{enumerate}
+    \item Match features points between two views
+    \item Select minimal subset of matches (4 for homography)
+    \item Compute the homography $\mathrm{H}$ from the subset
+    \item Compute projected position and count the number of inliers (distance < threshold)
+    \item Repeat steps 2-4 tp maximise the number of inliers
+\end{enumerate}
+
+\textbf{Weak perspective projection:} When the depth of objects in the scene is small compared to their distance from the camera, the projection can be approximated as a parallel projection, with a weak perspective projection matrix
 $$\mathrm{P}_{pll} = \begin{bmatrix}
     f & 0 & 0 & 0 \\
     0 & f & 0 & 0 \\
