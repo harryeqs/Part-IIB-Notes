@@ -345,7 +345,7 @@ $$\alpha(u,v) = \min\left(1, \frac{\mu^y(dv)q(v, du)}{\mu^y(du)q(u, dv)}\right) 
 
 
 \section{Langevin Dynamics}
-\textbf{Langevin stochastic differential equation (SDE):} $$dX_t = -\nabla \log U(X_t) dt + \sqrt{2} dB_t = \nabla \log \pi(X_t) dt + \sqrt{2} dB_t$$
+\textbf{Langevin stochastic differential equation (SDE):} $$dX_t = -\nabla U(X_t) dt + \sqrt{2} dB_t = \nabla \log \pi(X_t) dt + \sqrt{2} dB_t$$
 where $U(\cdot): \mathbb{R}^d \to \mathbb{R}$ is a potential function, $B_t$ is the Brownian motion and $\pi(x) \propto \exp(-U(x))$ is the stationary distribution of the SDE.
 
 The measure of $X_t$, $\rho_t$, satisfies the Fokker-Planck equation
@@ -367,7 +367,7 @@ i.e. there are no flat regions and the maximum is unique.
 \textbf{Convergence of Langevin dynamics:} For an m-strongly log-concave $\pi$, the convergence rate to the stationary measure is exponentially fast
 $$
 W_2(\rho_t, \pi) \leq e^{-mt} \left\{\|x - x^*\| + \left(\frac{d}{m}\right)^\frac{1}{2}\right\}
-$$,
+$$
 for $\pi_0 = \delta_x$ and $x^* = \arg\max_x \pi(x)$.
 
 \textbf{Metropolis-adjusted Langevin algorithm (MALA):} Given a state of the Markov chain $X_k$, propose a new state $\bar{X}_{k+1}$ by first-order Euler discretisation with step size $\gamma$:
@@ -376,7 +376,7 @@ $$
 $$
 To correct the discretisation bias, accept the proposed move with probability
 \begin{align*}
-\alpha(X_k, \bar{X}_{k+1}) &= \min\left(1, \frac{\pi(\bar{X}_{k+1}) q(\bar{X}_{k+1}| X_k)}{\pi(X_k) q(X_k| \bar{X}_{k+1})}\right) \\
+\alpha(X_k, \bar{X}_{k+1}) &= \min\left(1, \frac{\pi(\bar{X}_{k+1}) q(X_k | \bar{X}_{k+1})}{\pi(X_k) q(\bar{X}_{k+1}| X_k)}\right) \\
 \text{where } q(\bar{X}_{k+1}| X_k) &\propto \exp\left(-\frac{1}{4\gamma} \|\bar{X}_{k+1} - X_k - \gamma \nabla \log \pi(X_k)\|^2\right)
 \end{align*}
 
