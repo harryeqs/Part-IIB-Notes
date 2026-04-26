@@ -29,6 +29,8 @@ $$
 \hat{y} = \arg\min_{\omega}\left\{\sum_{i=1}^K \mathcal{L}(\omega, \omega_i)P(\omega_i | \boldsymbol{x^*})\right\}
 $$
 
+For binary classification, the decision rule is $\hat{y} = \arg\max_{\omega \in \{\omega_1, \omega_2\}} P(\omega | \boldsymbol{x^*})$.
+
 \textbf{Training a classifier:} to train a classifier, minimise the expected loss
 $$
 \mathcal{L}_\text{act} = \int \left[\sum_{i=1}^{K}\mathcal{L}(f(\boldsymbol{x}, \boldsymbol{\theta}), \omega_i) P(\omega_i | \boldsymbol{x}) \right] p(\boldsymbol{x}) d\boldsymbol{x}
@@ -45,28 +47,40 @@ To assess the performance on unseen data, split data into \textit{training} and 
 $$
 P(\text{error}) = \int_{\Omega_2} p(\omega_1, \boldsymbol{x})d\boldsymbol{x} + \int_{\Omega_1} p(\omega_2, \boldsymbol{x}) d \boldsymbol{x}
 $$
+where $\Omega_1$ and $\Omega_2$ are the decision regions for class $\omega_1$ and $\omega_2$ respectively.
 
-\textbf{Generative vs Discriminative models:} Generative models model the joint distribution of observations and classes $p(\boldsymbol{x}, \omega | \boldsymbol{\theta})$, and the posterior can be obtained from Bayes' rule:
+\textbf{Generative vs Discriminative models:} 
+
+\textit{Generative models} model the joint distribution of observations and classes $p(\boldsymbol{x}, \omega | \boldsymbol{\theta})$, and the posterior can be obtained from Bayes' rule:
 $$
 P(\omega_i | \boldsymbol{x^*}, \boldsymbol{\theta}) = \frac{p(\boldsymbol{x^*}, \omega_i | \boldsymbol{\theta})}{\sum_{j=1}^K p(\boldsymbol{x^*}, \omega_j | \boldsymbol{\theta})} = \frac{P(\omega_i) p(\boldsymbol{x^*} | \omega_i, \boldsymbol{\theta})}{\sum_{j=1}^K P(\omega_j) p(\boldsymbol{x^*} | \omega_j, \boldsymbol{\theta})}
 $$
 where $P(\omega_i)$ is the prior probability of class $\omega_i$. 
-
-Discriminative model directly model the posterior $P(\omega | \boldsymbol{x^*}, \boldsymbol{\theta})$.
-
-\textbf{Discriminative model estimation}: Find parameters $\boldsymbol{\theta}$ that maximise the likelihood of the labels given observations:
-$$
-\hat{\boldsymbol{\theta}} = \arg\max_{\boldsymbol{\theta}} \left\{\sum_{i=1}^N 
-\log P(y_i | \boldsymbol{x}_i, \boldsymbol{\theta})\right\}
-$$
-
-\textbf{Generative model estimation:} Find parameters $\boldsymbol{\theta}$ that maximise the likelihood of the observations given labels, where a separate model is trained for each class $\omega_i$:
+\begin{itemize}
+    \item Strength: Useful when there is a need to generate data or handle missing data.
+    \item Limitation: assumptions about the conditional distribution and prior might not hold.
+    \item Estimation: Find parameters $\boldsymbol{\theta}$ that maximise the likelihood of the observations given labels, where a separate model is trained for each class $\omega_i$:
 $$
 \hat{\boldsymbol{\theta}}_i = \arg\max_{\boldsymbol{\theta}} \left\{\sum_{j:y_j = \omega_i} 
 \log P(\boldsymbol{x}_j | \omega_i, \boldsymbol{\theta})\right\}
 $$
 
-To estimate the prior, simply count the number of samples in each class $P(\omega_i) = \frac{N_i}{N}$, or add 1 to all classes $P(\omega_i) = \frac{N_i + 1}{N + K}$.
+To estimate the prior, a simple way is to count the number of samples in each class $P(\omega_i) = \frac{N_i}{N}$, or add 1 to all classes $P(\omega_i) = \frac{N_i + 1}{N + K}$.
+
+    \item Examples: Naive Bayes, Gaussian mixture model, hidden Markov model.
+\end{itemize}
+
+\textit{Discriminative models} directly model the posterior $P(\omega | \boldsymbol{x^*}, \boldsymbol{\theta})$. 
+\begin{itemize}
+    \item Strength: Achieve better results as they focus directly on the decision boundary.
+    \item Limitation: lack the generative capability.
+    \item Estimation: Find parameters $\boldsymbol{\theta}$ that maximise the likelihood of the labels given observations:
+$$
+\hat{\boldsymbol{\theta}} = \arg\max_{\boldsymbol{\theta}} \left\{\sum_{i=1}^N 
+\log P(y_i | \boldsymbol{x}_i, \boldsymbol{\theta})\right\}
+$$
+    \item Examples: logistic regression, support vector machine.
+\end{itemize}
 
 \textbf{Multivariate Gaussian class conditional PDF:} For a $d$-dimensional observation $\boldsymbol{x}$, the class conditional PDF is
 $$p(\boldsymbol{x} | \omega_i, \boldsymbol{\theta}_i) = \frac{1}{(2\pi)^{d/2} |\boldsymbol{\Sigma}_i|^{1/2}} \exp\left(-\frac{1}{2}(\boldsymbol{x} - \boldsymbol{\mu}_i)^T \boldsymbol{\Sigma}_i^{-1} (\boldsymbol{x} - \boldsymbol{\mu}_i)\right)$$
@@ -84,7 +98,7 @@ $$
 
 For a multivariate Gaussian class conditional PDF, the decision boundary is a quadratic function of $\boldsymbol{x}$:
 $$\boldsymbol{x}^\top (\boldsymbol{\Sigma}_1^{-1} - \boldsymbol{\Sigma}_2^{-1}) \boldsymbol{x} + 2(\boldsymbol{\Sigma}_2^{-1} \boldsymbol{\mu}_2 - \boldsymbol{\Sigma}_1^{-1} \boldsymbol{\mu}_1)^\top \boldsymbol{x} + \boldsymbol{\mu}_1^\top \boldsymbol{\Sigma}_1^{-1} \bold{\mu}_1 - \boldsymbol{\mu}_2^\top \boldsymbol{\Sigma}_2^{-1} \boldsymbol{\mu}_2 + \log\left(\frac{|\boldsymbol{\Sigma}_1|}{|\boldsymbol{\Sigma}_2|}\right) - 2 \log \left(\frac{P(\omega_1)}{P(\omega_2)}\right)= 0$$
-The decision boundary is linear if the covariance matrices are the same $\boldsymbol{\Sigma}_1 = \boldsymbol{\Sigma}_2$.
+The decision boundary is linear if $\boldsymbol{\Sigma}_1 = \boldsymbol{\Sigma}_2$.
 
 \section{Graphical Models}
 \textbf{Independence:} Two random variables $X$ and $Y$ are independent $(X \perp Y)$ if $P(X, Y) = P(X)P(Y)$.
@@ -119,7 +133,7 @@ The joint distribution can be factorised as $P(X_1, \dots, X_d) = \frac{1}{Z} \p
 \subsection{Latent Variable Models}
 \textbf{Gaussian mixture model:} a model where each component is a Gaussian distribution:
 $$
-p(\boldsymbol{x}) = \sum_{m=1}^M P(c_m) p(\boldsymbol{x} | c_m) = \sum_{m=1}^M P(c_m) \frac{1}{(2\pi)^{d/2} |\boldsymbol{\Sigma}_m|^{1/2}} \exp\left(-\frac{1}{2}(\boldsymbol{x} - \boldsymbol{\mu}_m)^T \boldsymbol{\Sigma}_m^{-1} (\boldsymbol{x} - \boldsymbol{\mu}_m)\right)
+p(\boldsymbol{x}) = \sum_{m=1}^M P(c_m) p(\boldsymbol{x} | c_m) = \sum_{m=1}^M P(c_m) \mathcal{N}(\boldsymbol{x} ; \boldsymbol{\mu}_m, \boldsymbol{\Sigma}_m)
 $$
 
 \textbf{Factor analysis:} a Bayesian network where the observed variable $\boldsymbol{x}$ is generated from a continuous latent variable $\boldsymbol{z}$ with lower dimension:
@@ -142,9 +156,9 @@ For factor analysis, $\mathcal{Q}(\boldsymbol{\theta}^{(k)}, \boldsymbol{\theta}
 \begin{align*}
     \mathcal{L}(\theta) = \log p(\boldsymbol{x} | \boldsymbol{\theta}) &= \int q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}) \log p(\boldsymbol{x} | \boldsymbol{\theta}) d\boldsymbol{z} \\
     &= \int q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}) \log \frac{p(\boldsymbol{x}, \boldsymbol{z} | \boldsymbol{\theta})}{p(\boldsymbol{z} | \boldsymbol{x}, \boldsymbol{\theta})} d\boldsymbol{z} \\
-    &= \mathbb{E}_{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\left[ \frac{p(\boldsymbol{x}, \boldsymbol{z} | \boldsymbol{\theta})}{p(\boldsymbol{z} | \boldsymbol{x}, \boldsymbol{\theta})}\right] \\
-    &= \mathbb{E}_{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\left[ \frac{p(\boldsymbol{x}, \boldsymbol{z} | \boldsymbol{\theta})}{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\right] + \underbrace{\int q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}) \log \frac{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}{p(\boldsymbol{z} | \boldsymbol{x}, \boldsymbol{\theta})} d\boldsymbol{z}}_{\text{KL divergence, non-negative}} \\
-    &\geq \mathbb{E}_{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\left[ \frac{p(\boldsymbol{x}, \boldsymbol{z} | \boldsymbol{\theta})}{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\right] = \mathcal{F}(q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}), \boldsymbol{\theta})
+    &= \mathbb{E}_{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\left[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z} | \boldsymbol{\theta})}{p(\boldsymbol{z} | \boldsymbol{x}, \boldsymbol{\theta})}\right] \\
+    &= \mathbb{E}_{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\left[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z} | \boldsymbol{\theta})}{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\right] + \underbrace{\int q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}) \log \frac{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}{p(\boldsymbol{z} | \boldsymbol{x}, \boldsymbol{\theta})} d\boldsymbol{z}}_{\text{KL divergence, non-negative}} \\
+    &\geq \mathbb{E}_{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\left[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z} | \boldsymbol{\theta})}{q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})}\right] = \mathcal{F}(q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}), \boldsymbol{\theta})
 \end{align*}
 
 The EM algorithm iteratively maximises the lower bound $\mathcal{F}(q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}), \boldsymbol{\theta})$ by alternating between E-step and M-step:
@@ -152,12 +166,17 @@ The EM algorithm iteratively maximises the lower bound $\mathcal{F}(q(\boldsymbo
     \item E-step: $q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}^{(k)}) = p(\boldsymbol{z} | \boldsymbol{x}, \boldsymbol{\theta}^{(k)})$ (might be intractable, where decrease of $\mathcal{L}(\boldsymbol{\theta})$ is not guaranteed)
     \item M-step: $\boldsymbol{\theta}^{(k+1)} = \arg\max_{\boldsymbol{\theta}} \mathcal{F}(q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}^{(k)}), \boldsymbol{\theta})$
 \end{itemize}
+In the form of the auxiliary function
+\begin{itemize}
+    \item E-step: Set the component posterior to $P(c_m | \boldsymbol{x}_i, \boldsymbol{\theta}^{(k)})$ or the latent variable posterior to $p(\boldsymbol{z} | \boldsymbol{x}_i, \boldsymbol{\theta}^{(k)})$ using the current pararmeters.
+    \item M-step:  Maximise auxiliary function for new parameters $\boldsymbol{\theta}^{(k+1)} = \arg\max_{\boldsymbol{\theta}} \mathcal{Q}(\boldsymbol{\theta}^{(k)}, \boldsymbol{\theta})$.
+\end{itemize}
 which yields the sequence of inequalities for iteration $k+1$:
 $$
 \mathcal{L}(\boldsymbol{\theta}^{(k+1)}) \geq \mathcal{F}(q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}^{(k+1)}), \boldsymbol{\theta}^{(k+1)}) \geq \mathcal{F}(q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}^{(k)}), \boldsymbol{\theta}^{(k)}) = \mathcal{L}(\boldsymbol{\theta}^{(k)})
 $$
 
-\textbf{Mean-field approximation:} For a distribution $q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})$, the mean-field approximation factorises it as $q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}) = \prod_i q_i(\boldsymbol{z}_i, \boldsymbol{\tilde{\theta}}_i)$.
+\textbf{Mean-field approximation :} For a distribution $q(\boldsymbol{z},\boldsymbol{\tilde{\theta}})$, the mean-field approximation factorises it as $q(\boldsymbol{z},\boldsymbol{\tilde{\theta}}) = \prod_i q_i(\boldsymbol{z}_i, \boldsymbol{\tilde{\theta}}_i)$.
 
 \subsection{Sequence Models}
 \textbf{Hidden Markov model:} a \textit{generative} model that models the joint probability of observations and latent variables. 
@@ -191,7 +210,6 @@ $$
 $$
 P(q_0, \dots, q_T | \boldsymbol{x}_1, \dots, \boldsymbol{x}_T) = \frac{1}{Z} \exp\left(\sum_{i=1}^D \lambda_i f_i(q_0, \dots, q_T, \boldsymbol{x}_1, \dots, \boldsymbol{x}_T)\right)
 $$
-
 \textbf{Linear chain conditional random field (CRF):} a maximum entropy Markov model that assume conditional independences similar to HMM, where the posterior probability is
 $$
 P(q_0, \dots, q_T | \boldsymbol{x}_1, \dots, \boldsymbol{x}_T) = \frac{1}{Z} \exp\left(\sum_{t=1}^T \left(\sum_{i=1}^{D_t} \lambda^t_i f_i(q_{t-1}, q_t) + \sum_{i=1}^{D_a} \lambda^a_i f_i(q_t, \boldsymbol{x}_t)\right)\right)
@@ -208,11 +226,12 @@ To train a CRF, maximise the posterior of $\boldsymbol{q}_{1:T}$ given $\boldsym
 
 \section{Deep Learning}
 \subsection{Neural Networks}
-\textbf{Universal approximation theorem:} with enough hidden units, a shallow neural nework can describe any continuous functino on a compact subset of $\mathbb{R}^D$ to arbitrary precision.
+\textbf{Universal approximation theorem:} with enough hidden units, a shallow neural nework can describe any continuous function on a compact subset of $\mathbb{R}^D$ to arbitrary precision.
 
-\textbf{Number of regions created by output planes:} The number of regions created by $D > D_i$ planes in $D_i$ dimensions is $\sum_{i=0}^{D_i} \binom{D}{i}$.
+\textbf{Activation functions:} add non-linearity to the network, which is necessary for the network to learn complex functions. If the activation function is linear, the network can be reduced to a single layer (no backpropagation needed).
 
-\textbf{Hyperparameters of a neural network:} number of layers = depth of network, number of hidden units per layer = width of network.
+\textbf{Hyperparameters of a neural network:} number of layers = depth of network, number of hidden units per layer = width of network. A deep network is preferable to a single wide layer. 
+\textit{The total number of parameters should be matched to the quantity of training data.} Too many parameters can lead to overfitting, while too few parameters can lead to underfitting (however may improve generalisation).
 
 \subsection{Training Neural Networks}
 \textbf{Dimensionality of derivatives:} Any function $f(x) \to y$ where $x \in \mathbb{R}^{M\times N \times P}, y \in \mathbb{R}^{R\times S \times T}$ has a Jacobian $f'(x) \to J$ where $J \in \mathbb{R}^{R\times S \times T \times M \times N \times P}$. The large intermediates Jacobians can be avoided by reverse derivative using Vector-Jacobian Products.
@@ -247,19 +266,18 @@ The mini-batches are sampled from the dataset without replacement, and one pass 
     \phi_{t+1} &\leftarrow \phi_t - \alpha \frac{\tilde{m}_{t+1}}{\sqrt{\tilde{v}_{t+1}} + \epsilon}
 \end{align*}
 
-\textbf{He initialisation:} The variance of $y = \phi(Ax)$, where $\phi$ is the ReLU and $A \in \mathbb{R}^{M \times N}$ is rougly
+\textbf{He initialisation:} The variance of $y = \phi(Ax)$, where $\phi$ is the ReLU and $A \in \mathbb{R}^{M \times N}$ is roughly
 $$\sigma_y^2 \leq \frac{N}{2} \sigma_A^2 \sigma_x^2$$
 So initialise $A$ with variance $\sigma_A^2 = \frac{2}{N}$ to prevent vanishing or exploding gradients.
 
-\textbf{Stable log-sum-exp:} $\text{logsumexp}(\boldsymbol{y}) = \text{logsumexp}(\boldsymbol{y} - \max(\boldsymbol{y})) + \max(\boldsymbol{y})$
+\textit{(The output variances should always be matched to the input variances.)}
 
 \textbf{Newtons's method:} update parameters by the Hessian matrix $H$ and the gradient $g$:
 $$
 \theta_{t+1} \leftarrow \theta_t - \frac{1}{2}H^{-1} g
 $$
 
-Damped Newton's method adds a damping term $\lambda$: $\theta_{t+1} \leftarrow \theta_t - \frac{1}{2}(H + \lambda I)^{-1} g$.
-In Adam, $m_i \approx \frac{g_i}{\sqrt{g_i}}$ and $H \approx \text{diag}(g_i)^{\frac{1}{2}}$.
+\textit{This only works when $H$ is positive definite.} Damped Newton's method adds a damping term $\lambda$: $\theta_{t+1} \leftarrow \theta_t - \frac{1}{2}(H + \lambda I)^{-1} g$ to make $H + \lambda I$ positive definite.
 
 \textbf{Regularisation:} methods to reduce the generalisation gap due to overfitting to training data or model being uncontrained in areas with no training examples.
 \begin{figure}[h!]
@@ -361,35 +379,35 @@ Standard forms of attention:
     \includegraphics[width=0.8\textwidth]{figures/4F10/encoder-decoder.png}
 \end{figure}
 $$
-p(\boldsymbol{y}_{1:K} | \boldsymbol{x}_{1:L}) = \prod_{i=1}^{K} p(y_i | \boldsymbol{y}_{1:i-1}, \boldsymbol{x}_{1:L}) \approx \prod_{i=1}^K p(y_i | \boldsymbol{y}_{i-1}, \tilde{\boldsymbol{h}}_{i-1}, \boldsymbol{c}), \text{ where } \boldsymbol{c} = \phi(\boldsymbol{x}_{1:L})
+p(\boldsymbol{y}_{1:K} | \boldsymbol{x}_{1:L}) = \prod_{i=1}^{K} p(y_i | \boldsymbol{y}_{1:i-1}, \boldsymbol{x}_{1:L}) \approx \prod_{i=1}^K p(y_i | \boldsymbol{y}_{i-1}, \tilde{\boldsymbol{h}}_{i-1}, \boldsymbol{c_i}) \approx \prod_{i=1}^K p(y_i | \tilde{\boldsymbol{h}}_{i})
 $$
-For RNN, $\boldsymbol{c} = \boldsymbol{h}_L$. For attention, the encoder produces a sequence of vectors $\boldsymbol{c}_i = \sum_{\tau=1}^{L} \alpha_{i\tau} \boldsymbol{h}_\tau$, where $\alpha_{i\tau} = \frac{\exp(\mathcal{F}(\boldsymbol{h}_\tau, \tilde{\boldsymbol{h}}_{i-1}))}{\sum_{j=1}^{L} \exp(\mathcal{F}(\boldsymbol{h}_j, \tilde{\boldsymbol{h}}_{i-1}))}$ (the query for $i$-th output is $\boldsymbol{y}_{1:i-1}$).
+For RNN, $\boldsymbol{c_i} = \boldsymbol{h}_L$.
 
-\textbf{Greedy decoding:} at each step, choose the most likely output $\hat{y}_i = \arg\max_{y_i} p(y_i | \hat{\boldsymbol{y}}_{1:i-1}, \boldsymbol{x}_{1:L})$.
+For attention-based model, $\boldsymbol{c}_i = \sum_{\tau=1}^{L} \alpha_{i\tau} \boldsymbol{h}_\tau$, where $\alpha_{i\tau} = \frac{\exp(\mathcal{F}(\boldsymbol{h}_\tau, \tilde{\boldsymbol{h}}_{i-1}))}{\sum_{j=1}^{L} \exp(\mathcal{F}(\boldsymbol{h}_j, \tilde{\boldsymbol{h}}_{i-1}))}$. The previous translation history vector $\tilde{\boldsymbol{h}}_{i-1}$ is used as a query, where $\tilde{\boldsymbol{h}}_{i} = \mathcal{F}_q(y_{i-1}, \tilde{\boldsymbol{h}}_{i-1}, \boldsymbol{c}_{i})$ encodes the tranlsation history up-to $i-1$ and generates the output $y_i$.
+
+Alternative architecture: Use the current translation history vector $\tilde{\boldsymbol{h}}_i = \mathcal{F}_q(y_{i-1}, \tilde{\boldsymbol{h}}_{i-1})$ and the context $\boldsymbol{c}_i$. Use $\hat{\boldsymbol{h}}_i = \begin{bmatrix}\boldsymbol{c_i} \\ \tilde{\boldsymbol{h}}_i\end{bmatrix}$ to generate the output $y_i$ (Tripos 2023).
 
 \textbf{Word embeddings:} represent words as vectors
 $$
 \underbrace{w_i}_{\text{word}} \to \underbrace{\boldsymbol{t}_i}_{\text{one-hot encoding}} \to \underbrace{W\boldsymbol{t}_i = \boldsymbol{x}_i}_{\text{embedding}}
 $$
 
-\textbf{Word2Vec:} learn word projection $W$ by training a model to predict a word $w_i$ or the word given its context (continuous bag of words) via maximising
-$$
-\prod_{i=1}^L p(w_i | w_{i-k}, \dots, w_{i-1}, w_{i+1}, \dots, w_{i+k}) = \prod_{i=1}^L p(w_i | W(\boldsymbol{t}_{i-k}, \dots, \boldsymbol{t}_{i-1}, \boldsymbol{t}_{i+1}, \dots, \boldsymbol{t}_{i+k}))
-$$
-
-
-\textbf{Transformer:} use multi-head attention for relationships within or between sequences
-\begin{itemize}
-    \item \textit{Scaled dot-product multi-head attention:}
+\textbf{Transformer architecture:} \begin{itemize}
+    \item \textit{Positional encoding:} enable the model to consider the order of sequence elements during attention computation.
+    \item \textit{Scaled dot-product multi-head attention:} multiple attention heads allow the model to attend to different parts of the input sequence simultaneously to capture different types of relationships and provide richer and more versatile representations of the sequence elements.
 \begin{align*}
     \alpha_{\tau i}^{(j)} &= \frac{1}{Z} \exp\left(\frac{\overbrace{(W_q^{(j)} \boldsymbol{x}_{\tau})^\top}^{\text{query}} \overbrace{(W_k^{(j)} \boldsymbol{x}_{i})}^{\text{key}}}{\sqrt{d_k^{(j)}}}\right) \\
     \boldsymbol{c}_i^{(j)} &= \sum_{\tau=1}^L \alpha_{\tau i}^{(j)} \overbrace{W_v^{(j)} \boldsymbol{x}_{\tau}}^{\text{value}} \\
     \boldsymbol{c} &= \left[\boldsymbol{c}_i^{(1)\top}, \dots, \boldsymbol{c}_i^{(H)\top}\right]^\top
 \end{align*}
-    \item \textit{Masked multi-head attention:} mask the attention weights $\alpha_{\tau i}^{(j)}$ for $\tau > i$ to prevent the model from attending to future inputs.
-    \item \textit{Multi-head cross attention:} use values and key from the encoder and query from the (masked) decoder.
+Three types of attentions are used:
+\begin{itemize}
+    \item \textit{Multi-head self-attention:} use the query, key and value from the same sequence to compute the relationship between all words in the sequence in parallel, helps the model to focus on relevant parts of the sequence.
+    \item \textit{Masked multi-head attention:} mask the attention weights $\alpha_{\tau i}^{(j)}$ for $\tau > i$ (by setting them to $-\infty$ before applying softmax) to prevent the model from attending to future inputs.
+    \item \textit{Multi-head cross-attention:} use values and key from the encoder and query from the (masked) decoder.
+\end{itemize} 
     \item \textit{Feedforward network:} apply to the output of multi-head attention.
-    \item \textit{Add and norm:} add the input to the output of each layer and apply layer norm.
+    \item \textit{Add and norm:} add the input to the output of each layer (= residual connection) and apply layer norm.
     \item \textit{Output layer:} use a linear projection to map the output of the decoder to the vocabulary size, and apply softmax to get an posterior distribution of next word.
 \end{itemize}
 \begin{figure}[h!]
@@ -397,7 +415,26 @@ $$
     \includegraphics[width=0.8\textwidth]{figures/4F10/transformer.png}
 \end{figure}
 
-\textbf{BERT:} predict one or more masked words in a sequence rather than the next word.
+The computation cost is $O(L^2)$ where $L$ is the sequence length.
+
+\textbf{RNNs vs Transformers:}
+\begin{itemize}
+    \item Parallelism: Transformers process all elements of the sequence simultaneously, while RNNs process them sequentially. Hence transformers are faster for long sequences by using GPU acceleration.
+    \item Sequence length: Transformers can handle long-range dependencies efficiently due to self-attention, while RNNs struggle with vanishig gradients.
+    \item Scalability: Transformers scale better with hardware acceleration , while RNNs are limited by their sequential nature. However, the computation cost is $O(L^2)$ for transformers and $O(L)$ for RNNs.
+    \item Biases: Transformers allow all elements of the sequence to interact, while RNNs have a bias towards the end of the sequence.
+\end{itemize}
+
+\textbf{Greedy decoding:} At each step, choose the most likely output $\hat{y}_i = \arg\max_{y_i} p(y_i | \hat{\boldsymbol{y}}_{1:i-1}, \boldsymbol{x}_{1:L})$. 
+Repeat until the end of sentence token \texttt{eos} is generated.
+
+\textbf{Teacher-forcing:} Use the true output history $\boldsymbol{y}_{1:j-1}$ as input to the decoder at step $j$ during training. The training criterion is the \textit{negative cross-entropy}:
+$$
+\mathcal{L} = \sum_{i=1}^N \sum_{j=1}^J \sum_{k=1}^V \delta(w_k, y_{ij}) \log P(w_k | \boldsymbol{x}_{1:L}, \boldsymbol{y}_{i, 1:j-1}, \boldsymbol{\theta})
+$$
+Advantage: The updates can be done in parallel.
+
+Limitation: At inference time, there is a mismatch between the training history and the generated history, which can lead to error accumulation.
 
 \section{Ensemble Methods}
 \textbf{Binary ensemble classifier:} select the class with the most votes from a set of binary classifiers (majority voting). The probability of error is
@@ -422,6 +459,7 @@ $$
 $$
 P(\omega | \boldsymbol{x}^*) = \frac{1}{M} \sum_{m=1}^M P(\omega | \boldsymbol{x}^*, \boldsymbol{\theta}^{(m)})
 $$
+This assumes that each of the models is approximately a draw from the parameter distribution.
 
 \textbf{Teacher-student training:} train a student model to mimic the predictions of a teacher model (rather than the true labels) by minimising the cross-entropy loss
 $$
@@ -438,59 +476,76 @@ where each expert focus on different aspects of the data.
 \textbf{Switch transformer:} use a router (equivalent to the gating function) to select between different feedforward networks.
 
 \section{Support Vector Machines}
-\textbf{Maximum margin classifier:} when the data is linearly separable, find the plane that maximises the margin -- the distance to the closest point in each class.
-The data points on the margin are called \textit{support vectors}. The magnitude of the margin is
+\textbf{Maximum margin classifier:}
+\begin{itemize}
+\item When the data is linearly separable, a maximum margin classifier (aka \textit{hard margin support vector machine}) finds the hyperplane that maximises the margin -- the distance to the closest point in each class.
+\item The data points on the margin are called \textit{support vectors} -- they determine the position and orientation of the hyperplane. 
+\item By maximising the margin, SVM favours better generalization to unseen data.
+\item The magnitude of the margin is
 $$
 \frac{w^\top (x_+ - x_-)}{2\|w\|} = \frac{1}{\|w\|}
 $$
 where $x_+$ and $x_-$ are the support vectors of the positive and negative class respectively.
+\end{itemize}
 
-\textbf{Optimisation with inequality constraints:} For the constrained optimisation problem: maximise $f(x, y)$ subject to $g(x, y) \geq 0$, the Lagragian function is
-$$
-\mathcal{L}(x, y, \lambda) = f(x, y) + \lambda g(x, y)
-$$
-The solution must satisfy the Karush-Kuhn-Tucker (KKT) conditions:
-\begin{enumerate}
-    \item When the constraint is not active, the solution satisfies $\nabla f(x, y) = 0$. The Lagrangian also satisfies $\nabla \mathcal{L}(x, y, \lambda) = 0$ if and only if $\lambda = 0$.
-    \item When the constraint is active, the solution satisfies $g(x, y) = 0$ and $\nabla f(x, y) = - \lambda \nabla g(x, y)$ with $\lambda > 0$.
-\end{enumerate}
-In both cases, the solution must satisfy $\lambda g(x, y) = 0$ subject to $\lambda \geq 0$ and $g(x, y) \geq 0$.
-
-\textbf{Optimisation of maximum margin classifier:} minimise $\frac{1}{2} \|w\|^2$ subject to $t_n (w^\top x_n + b) \geq 1$ for all $n$. The Lagrangian is
+\textbf{Optimisation of maximum margin classifier:} Minimise $\frac{1}{2} \|w\|^2$ subject to $t_n (w^\top x_n + b) \geq 1$ for all $n$. The Lagrangian is
 $$
 \mathcal{L}(w, b, \boldsymbol{a}) = \frac{1}{2} \|w\|^2 - \sum_{n=1}^N a_n (t_n (w^\top x_n + b) - 1)
 $$
-
-Differentiate with respect to $w$ and $b$ gives $w = \sum_{n=1}^N a_n t_n x_n$ and $\sum_{n=1}^N a_n t_n = 0$.
-From the KKT conditions, the solution must satisfy $a_n (t_n (w^\top x_n + b) - 1) = 0$. Hence data points with $a_n > 0$ are the support vectors, the predictions are determined by them:
+Full KKT conditions:
+\begin{enumerate}
+    \item Primal feasibility: $t_n (w^\top x_n + b) - 1 \geq 0$
+    \item Dual feasibility: $a_n \geq 0$
+    \item Complementary slackness: $a_n (t_n (w^\top x_n + b) - 1) = 0$
+    \item Stationarity: $w = \sum_{n=1}^N a_n t_n x_n, \sum_{n=1}^N a_n t_n = 0$ (from differentiating w.r.t. $w$ and $b$)
+\end{enumerate}
+Data points with $a_n > 0$ are the support vectors, which determine the predictions:
 $$
 y(x) = \sum_{n \in \mathcal{S}} a_n t_n x_n^\top x + b
 $$
-where $\mathcal{S}$ is the set of indexes of support vectors. The bias can be obtrain by the constraint $t_n (w^\top x_n + b) = 1$
+where $\mathcal{S}$ is the set of indexes of support vectors. The bias can be obtained by the constraint $t_n (w^\top x_n + b) = 1$
 $$
 b = \frac{1}{|\mathcal{S}|} \sum_{n \in \mathcal{S}} \left(t_n - \sum_{m \in \mathcal{S}} a_m t_m x_m^\top x_n\right)
 $$
 
-\textbf{Soft margin:} allow some data points to be misclassified by introducing slack variables $\xi_1, \dots, \xi_N \geq 0$ in the constraints $t_n (w^\top x_n + b) \geq 1 - \xi_n$ for all $n$. Points with $\xi_n = 0$ are on the margin or beyond, points with $0 < \xi_n \leq 1$ are between the margin and the decision boundary, and points with $\xi_n > 1$ are misclassified.
+\textbf{Optimisation with soft margin:} Soft margin allows some data points to be misclassified by introducing slack variables $\xi_1, \dots, \xi_N \geq 0$ in the constraints $t_n (w^\top x_n + b) \geq 1 - \xi_n$ for all $n$. 
+
+Minimise $\frac{1}{2} \|w\|^2 + C \sum_{n=1}^N \xi_n$ subject to $t_n (w^\top x_n + b) \geq 1 - \xi_n$ and $\xi_n \geq 0$ for all $n$. The Lagrangian is
+$$
+L(w, b, \boldsymbol{a}, \boldsymbol{\mu}) = \frac{1}{2} \|w\|^2 + C \sum_{n=1}^N \xi_n - \sum_{n=1}^N a_n (t_n (w^\top x_n + b) - 1 + \xi_n) - \sum_{n=1}^N \mu_n \xi_n
+$$
+with Lagrange multipliers $a_n = C - \mu_n \geq 0$ and $\mu_n \geq 0$. 
+
+The regularisation parameter $C > 0$ controls the trade-off between margin size and misclassification rate. Small $C$ allows more misclassification and larger margin (useful when there are many outliers) and vice versa.
+
+Full KKT conditions:
+\begin{enumerate}
+    \item Primal feasibility: $t_n (w^\top x_n + b) \geq 1 - \xi_n$ and $\xi_n \geq 0$
+    \item Dual feasibility: $a_n \geq 0$ and $\mu_n \geq 0$
+    \item Complementary slackness: $a_n (t_n (w^\top x_n + b) - 1 + \xi_n) = 0$ and $\mu_n \xi_n = 0$
+    \item Stationarity: $w = \sum_{n=1}^N a_n t_n x_n, \sum_{n=1}^N a_n t_n = 0$ (from differentiating w.r.t. $w$ and $b$), and $a_n = C - \mu_n$ (from differentiating w.r.t. $\xi_n$)
+\end{enumerate}
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.6\textwidth]{figures/4F10/SVM.png}
 \end{figure}
 
+\textbf{Non-linear max-margin classifier:} replace feature vectors $\boldsymbol{x}_n$ with a non-linear mapping $\boldsymbol{\phi}(\boldsymbol{x}_n) = [\phi_1(\boldsymbol{x}_n), \dots, \phi_M(\boldsymbol{x}_n)]^\top$. The \textit{Gram matrix} consists of inner products of feature vectors, where $K_{nm} = \phi(\boldsymbol{x}_n)^\top \phi(\boldsymbol{x}_m)$. 
 
-\textbf{Optimisation with soft margin:} minimise $\frac{1}{2} \|w\|^2 + C \sum_{n=1}^N \xi_n$ subject to $t_n (w^\top x_n + b) \geq 1 - \xi_n$ and $\xi_n \geq 0$ for all $n$. The Lagrangian is
-$$
-L(w, b, \boldsymbol{a}, \boldsymbol{\mu}) = \frac{1}{2} \|w\|^2 + C \sum_{n=1}^N \xi_n - \sum_{n=1}^N a_n (t_n (w^\top x_n + b) - 1 + \xi_n) - \sum_{n=1}^N \mu_n \xi_n
-$$
-with Lagrange multipliers $a_n = C - \mu_n \geq 0$ and $\mu_n \geq 0$. $C > 0$ controls the trade-off between margin size and misclassification rate. Small $C$ allows more misclassification and larger margin, while large $C$ allows less misclassification and narrower margin.
-The KKT conditions are $a_n (t_n (w^\top x_n + b) - 1 + \xi_n) = 0$ and $\mu_n \xi_n = 0$. Points with $a_n = C$ lie inside the margin can either be correctly classified or misclassified.
+\textbf{Kernel function:} $k(\boldsymbol{x}_n, \boldsymbol{x}_m) = \phi(\boldsymbol{x}_n)^\top \phi(\boldsymbol{x}_m)$ can be used to compute the dot products without explicitly computing the feature vectors.
 
-\textbf{Non-linear max-margin classifier:} replace feature vectors $\boldsymbol{x}_n$ with a non-linear mapping $\boldsymbol{\phi}(\boldsymbol{x}_n) = [\phi_1(\boldsymbol{x}_n), \dots, \phi_M(\boldsymbol{x}_n)]^\top$.
+Advantages of kernel:
+\begin{itemize}
+    \item Avoiding explicity computing the feature vectors allows very high-dimensional feature spaces.
+    \item Can be used to obtain non-linear version of linear machine learning algorithms that can be written in terms of dot products of data points.
+\end{itemize}
 
-\textbf{Gram matrix:} the matrix of inner products of feature vectors, where $K_{nm} = \phi(\boldsymbol{x}_n)^\top \phi(\boldsymbol{x}_m)$. The kernel function $k(\boldsymbol{x}_n, \boldsymbol{x}_m) = \phi(\boldsymbol{x}_n)^\top \phi(\boldsymbol{x}_m)$ can be used to compute the Gram matrix without explicitly computing the feature vectors.
-
-\textbf{Mercer's condition:} $k(\cdot, \cdot)$ is a valid kernel function if and only if 1) $k$ is symmetric, and 2) the Gram matrix $K$ is positive semi-definite for any set of input vectors.
+\textbf{Mercer's condition:} $k(\cdot, \cdot)$ is a valid kernel function if
+\begin{enumerate}
+    \item $k$ is symmetric
+    \item the Gram matrix $K$ is positive semi-definite for any set of input vectors.
+\end{enumerate}
 
 \textbf{Kesler's construct:} add constraints to enforce output of correct classifer than the others
 $$
@@ -502,11 +557,25 @@ $$
 $$
 The dimensinoality of feature space if $Kd$ and the number of constraints (effective number of data points) is $(K-1)N$.
 
-\textbf{Perceptron algorithm:} Initialise $w = 0$ and $b = 0$. For each data point, if it is misclassified, update the weights and bias as $w \leftarrow w + t_n \boldsymbol{x}_n$ and $b \leftarrow b + t_n$. Repeat until all data points are correctly classified.
-Classfication is based on $y(\boldsymbol{x}^*) = w^\top \boldsymbol{x}^* + b$.
+\textbf{Perceptron algorithm:}
+\begin{enumerate}
+\item Initialise $w = 0$ and $b = 0$. 
+\item For each data point, if it is misclassified, update the weights and bias
 
-The kernelised version is: Initialise $\alpha_n = 0$ for all $n$ and $b = 0$. For each data point, if it is misclassified, update the weights and bias as $\alpha_n \leftarrow \alpha_n + 1$ and $b \leftarrow b + t_n$. Repeat until all data points are correctly classified.
-Classification is based on $y(\boldsymbol{x}^*) = \sum_{n=1}^N \alpha_n t_n k(\boldsymbol{x}_n, \boldsymbol{x}^*) + b$.
+$w \leftarrow w + t_n \boldsymbol{x}_n$ and $b \leftarrow b + t_n$. 
+\item Repeat until all data points are correctly classified.
+\end{enumerate}
+Classfication is based on $y(\boldsymbol{x}^*) = w^\top \boldsymbol{x}^* + b = \sum_{n=1}^N \alpha_n t_n \boldsymbol{x}_n^\top \boldsymbol{x}^* + b$, where $\alpha_n$ is the number of times the data point $n$ is misclassified.
+
+The kernelised version is: 
+\begin{enumerate}
+\item Initialise $\alpha_n = 0$ for all $n$ and $b = 0$. 
+\item For each data point, if it is misclassified, update the weights and bias:
+
+$\alpha_n \leftarrow \alpha_n + 1$ and $b \leftarrow b + t_n$. 
+\item Repeat until all data points are correctly classified.
+\end{enumerate}
+Classification is based on $y(\boldsymbol{x}^*) = \sum_{n=1}^N \alpha_n t_n k(\boldsymbol{x}_n, \boldsymbol{x}^*) + b$. $\alpha_n$ represent the number of times the data point $n$ is misclassified.
 
 \section{Kernels for Structured Data}
 \textbf{String kernel:} Given a list of substrings $s_1, \dots, s_m$, the feature $\phi_s(x)$ indicates the occurrence of $s$ in $x$. The kernel between two strings $x$ and $x'$ is defined as
