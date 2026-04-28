@@ -5,6 +5,8 @@
 \usepackage[T1]{fontenc}
 \usepackage{palatino}
 \usepackage{amsmath, amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{array}
 \usepackage{titling}
 
@@ -30,6 +32,33 @@ $$
 $$
 where $\sigma_f^2$ is the variance of $f(x)$.
 
+\textit{*Proof:} Define a transform to zero mean and variance
+$$
+\tilde{f}(x) = \frac{f(x) - \mathbb{E}[f(x)]}{\sigma_f}
+$$
+Define $S_N = \frac{1}{N} \sum_{n=1}^N \tilde{f}(x_n)$ and $Z_N = \frac{S_N}{\sqrt{N}}$.
+The moment generating of $Z_N$ is 
+\begin{align*}
+M_{Z_N}(t) &= \mathbb{E}[\exp(t Z_N)] = \mathbb{E}\left[ \exp\left(t \frac{S_N}{\sqrt{N}}\right)\right] \\
+&= \mathbb{E}\left[ \exp\left(\frac{t}{\sqrt{N}} \sum_{n=1}^N \tilde{f}(x_n)\right)\right] \\
+&= \prod_{n=1}^N \mathbb{E}\left[ \exp\left(\frac{t}{\sqrt{N}} \tilde{f}(x_n)\right)\right] = \left( \mathbb{E}\left[ \exp\left(\frac{t}{\sqrt{N}} \tilde{f}(x)\right)\right] \right)^N
+\end{align*}
+
+Taylor expansion of the exponential function gives
+$$
+\exp\left(\frac{t}{\sqrt{N}} \tilde{f}(x)\right) = 1 + \frac{t}{\sqrt{N}} \tilde{f}(x) + \frac{t^2}{2N} \tilde{f}(x)^2 + O(N^{-2})
+$$
+Since $\mathbb{E}[\tilde{f}(x)] = 0$ and $\mathbb{E}[\tilde{f}(x)^2] = 1$, the expectation is
+$$
+\mathbb{E}\left[ \exp\left(\frac{t}{\sqrt{N}} \tilde{f}(x)\right)\right] = 1 + \frac{t^2}{2N} + O(N^{-2})
+$$
+Hence, the MGF of $Z_N$ is
+$$
+M_{Z_N}(t) = \left( 1 + \frac{t^2}{2N} + O(N^{-2}) \right)^N \to \exp\left(\frac{t^2}{2}\right) \text{ as } N \to \infty
+$$
+
+which is the MGF of the standard normal. Hence $Z_N \to \mathcal{N}(0, 1)$, $S_N \to \mathcal{N}(0, \frac{1}{N})$, $\frac{1}{N} \sum_{n=1}^N f(x_n) \to \mathcal{N}(\mathbb{E}[f(x)], \frac{\sigma_f^2}{N})$.
+
 \textbf{Importance sampling:} use another probability density $q(x)$ that satisfy $q(x) \neq 0$ when $f(x) \neq 0$ to sample $x$. The expectation can be rewritten as
 \begin{align*}
     \mathbb{E}_p[f(x)] &= \int f(x) p(x) dx \\
@@ -54,8 +83,13 @@ The optimal value of $c$ is
 $$
 c^* = -\frac{\text{Cov}(\hat{E}_f, \hat{E}_g)}{\text{Var}(\hat{E}_g)}
 $$
+giving the optimal estimator variance of
+$$
+\text{Var}(\hat{E}_f^{c^*}) = \text{Var}(\hat{E}_f) - \frac{\text{Cov}(\hat{E}_f, \hat{E}_g)^2}{\text{Var}(\hat{E}_g)}
+$$
 
 For multiple control variates, the estimator is $\hat{E}_f^c = \hat{E}_f + \sum_i c_i (\hat{E}_{g_i} - \mathbb{E}[g_i(x)])$, and the optimal coefficients are $\mathbf{c}^* = -C^{-1} \mathbf{b}$, where $C$ is the covariance matrix of $\hat{E}_{g_i}$ and $\mathbf{b}$ is the covariance vector between $\hat{E}_f$ and $\hat{E}_{g_i}$.
+The optimal estimator variance is $\text{Var}(\hat{E}_f^{c^*}) = \text{Var}(\hat{E}_f) - \mathbf{b}^\top C^{-1} \mathbf{b}$.
 
 \section{Lebesgue Integral and Measure}
 \textbf{Riemann integral:} Define two summations for a function $f$ on an interval $[a, b]$ and $\Delta x_k = [x_k, x_{k+1}]$:
@@ -75,8 +109,8 @@ Limitations:
 
 \textbf{Convergence of functions:}
 \begin{itemize}
-    \item Pointwise convergence: Given $\epsilon > 0$, there exists a natural number $N(\epsilon, x)$ such that for $n > N$, $|f_n(x) - f(x)| < \epsilon$. Does not preserve continuity.
-    \item Uniform convergence: Given $\epsilon > 0$, there exists a natural number $N(\epsilon)$ such that for $n > N$, $|f_n - f| < \epsilon, \forall x \in D$. Preserves continuity.
+    \item \textit{Pointwise convergence:} Given $\epsilon > 0$, there exists a natural number $N(\epsilon, x)$ such that for $n > N$, $|f_n(x) - f(x)| < \epsilon$. Does not preserve continuity.
+    \item \textit{Uniform convergence:} Given $\epsilon > 0$, there exists a natural number $N(\epsilon)$ such that for $n > N$, $|f_n - f| < \epsilon, \forall x \in D$. Preserves continuity.
 \end{itemize}
 
 \textbf{Lebesgue integral:} Partition the range of the function instead of the domain. For $0 \leq f_\text{min} \leq f(x) \leq f_\text{max}$, the range is partitioned into $f_\text{min} = f_1, f_2, \dots, f_n = f_\text{max}$. For each $f_k$, there are sets of values $X_k$ such that $f_k \leq f(x) < f_{k+1}$ for $x \in X_k$, and the size (measure) of each set is $\mu(X_k)$.
@@ -90,7 +124,7 @@ Advantages:
     \item A Riemann integrable funcion is also Lebesgue integrable, but not vice versa.
 \end{itemize}
 
-\textbf{Measure of sets:} A set $X$ and a set $\Sigma$ generated from $X$ (contains $X$, $\emptyset$, and other subsets of $X$) defines a \textit{measurable set} $\{X, \Sigma\}$. Along with a measure $\mu$ it defines a \textit{measure space} $\{X, \Sigma, \mu\}$.
+\textbf{Measure of sets:} A set $X$ and a set $\Sigma$ generated from $X$ (contains $X$, $\emptyset$, and other subsets of $X$, closed under countable complementation, union and intersections) defines a \textit{measurable set} $\{X, \Sigma\}$. Along with a measure $\mu$ it defines a \textit{measure space} $\{X, \Sigma, \mu\}$.
 
 Rules for measure:
 \begin{itemize}
@@ -98,17 +132,17 @@ Rules for measure:
     \item $\mu(\emptyset) = 0$.
     \item If $E_i \subseteq E_j$, then $\mu(E_i) \leq \mu(E_j)$.
     \item $\mu \left(\bigcup_{i=1}^\infty E_i\right) = \sum_{i=1}^\infty \mu(E_i)$ for disjoint sets $E_i \in \Sigma$.
-    \item If $(X, \Sigma_X)$ and $(Y, \Sigma_Y)$ are both measureable, then a function $f: X \to Y$ is measurable if $f^{-1}(B) \in \Sigma_X$ for all $B \in \Sigma_Y$.
+    \item If $(X, \Sigma_X)$ and $(Y, \Sigma_Y)$ are both measurable, then a function $f: X \to Y$ is measurable if $f^{-1}(B) \in \Sigma_X$ for all $B \in \Sigma_Y$.
 \end{itemize}
 
 \textbf{Lebesgue measure:}
 \begin{itemize}
-    \item For a continuous line segment on $\mathbb{R}$, the Lebesguemeasure is the length of the segment. e.g. $I = [a, b]$, $\mu(I) = b - a$.
+    \item For a continuous line segment on $\mathbb{R}$, the Lebesgue measure is the length of the segment. e.g. $I = [a, b]$, $\mu(I) = b - a$.
     \item The Lebesgue measure of a single point is zero. By additivity, the Lebesgue measure for the set of rational numbers $\mu(\mathbb{Q}) = 0$.
-    \item The Lebesgue meausre of countable sets (any set that can be put into a one-to-one correspondence with the set of integers $\mathbb{Z}$) is zero.
+    \item The Lebesgue measure of countable sets (any set that can be put into a one-to-one correspondence with the set of integers $\mathbb{Z}$) is zero.
 \end{itemize}
 
-\textbf{Probability measures:} The probability space $\{\Omega, \mathcal{F}, P\}$ consists of three elements:
+\textbf{Probability measures:} The \textit{probability space} $\{\Omega, \mathcal{F}, P\}$ consists of three elements:
 \begin{itemize}
     \item Sample space $\Omega$: the set of all possible outcomes.
     \item $\sigma$-algebra $\mathcal{F}$: certain subsets of $\Omega$ with outcomes to be considered.
@@ -120,7 +154,7 @@ If $E = \mathbb{R}$, then $X: \Omega \to \mathbb{R}$ is a real-valued \textit{ra
 
 The expectation of a random variable $X$ is defined as $\mathbb{E}[X] = \int_\Omega X(\omega) dP(\omega)$.
 
-\textbf{Radon-Nikodym theorem:} Consider two measures $\mu$ and $\nu$ on a measurable space $\{X, \Sigma\}$. If for every $A \in \Sigma$ where $\nu(A) = 0$ also have $\mu(A) = 0$, then $\mu$ is absolutely continuous with respect to $\nu$, denoted as $\mu \ll \nu$.
+\textbf{Radon-Nikodym theorem:} Consider two measures $\mu$ and $\nu$ on a measurable space $\{X, \Sigma\}$. If for every $A \in \Sigma$ where $\nu(A) = 0$ also have $\mu(A) = 0$, then $\mu$ is \textit{absolutely continuous} with respect to $\nu$, denoted as $\mu \ll \nu$.
 
 Given a probability mesure $P$, a new probability measure $Q$ can be defined if there exists a function $L(\omega)$ such that $dQ(\omega) = L(\omega) dP(\omega)$.
 
@@ -130,7 +164,7 @@ The expectation of a function $F(\omega)$ can be computed as
 $$
 \int_\Omega F(\omega) dQ(\omega) = \int_\Omega F(\omega) L(\omega) dP(\omega)
 $$
-where the function $L(\omega) = \frac{dQ(\omega)}{dP(\omega)}$ is the Radon-Nikodym derivative, subject to (1) $L(\omega) \geq 0$ for all $\omega \in \Omega$ and (2) $\int_\Omega L(\omega) dP(\omega) = 1$.
+where the function $L(\omega) = \frac{dQ(\omega)}{dP(\omega)}$ is the Radon-Nikodym derivative if $Q \ll P$, subject to (1) $L(\omega) \geq 0$ for all $\omega \in \Omega$ and (2) $\int_\Omega L(\omega) dP(\omega) = 1$.
 
 For a random variable $X$ on $\mathbb{R}$, the probability of a small neighborhood $B$ around the outcome $X = x \in \mathbb{R}$ is $\int_B dP = \int_B L(x) d\mu(x) = \int_B L(x) dx$. The function $L(x) = \frac{dP(x)}{dx}$ is the probability density function of $P$ with respect to the Lebesgue measure.
 
@@ -160,34 +194,86 @@ $$
 \textit{Aperiodic:} the Markov chain does not get trapped in cycles.
 
 \textit{Detailed balance (reversible):} a Markov chain satisfies detailed balance if $\pi(\boldsymbol{\theta}^{(i)}) T(\boldsymbol{\theta}^{(i-1)} | \boldsymbol{\theta}^{(i)}) = \pi(\boldsymbol{\theta}^{(i-1)}) T(\boldsymbol{\theta}^{(i)} | \boldsymbol{\theta}^{(i-1)})$.
+This is a sufficient condition for an invariant distribution to exist.
 
 \subsection{Metropolis-Hastings Algorithm}
 Define the \textit{transition kernel} as
 $$
 \underbrace{P(x, dy)}_{\text{prob. of transition from } x \text{ to } dy} = \underbrace{p(x,y) dy}_{\text{prob. of moving to $dy$ around $y$}} + \underbrace{r(x) \delta_x(dy)}_{\text{prob. of staying at } x}
 $$
-where $r(x) = 1 - \int p(x,y) dy$ is the probability of staying at $x$.
+If $p(x, x) = 0$ and $\int_{\mathbb{R}^d} P(x,dy) = 1$, then $r(x) = 1 - \int_{\mathbb{R}^d} p(x,y) dy$ is the probability that the chain remains at $x$.
 
-If $p(x,y)$ satisfies detailed balance $\pi(x)p(x,y) = \pi(y)p(y,x)$, then $\pi(\cdot)$ is the invariant density of the transition kernel $P(x, \cdot)$. In this case, the chain is \textit{reversible}, satisfiying
-$$P(y, dx) \pi(dy) = P(x, dy) \pi(dx)$$
+If $p(x,y)$ satisfies detailed balance $\pi(x)p(x,y) = \pi(y)p(y,x)$, then $\pi(\cdot)$ is the invariant density of the transition kernel $P(x, \cdot)$.
+
+\textit{*Proof:} 
+\begin{align*}
+\int_{\mathbb{R}^d} P(x, A)\pi(x)  dx &= \int_{\mathbb{R}^d} \left[\int_A p(x,y)dy\right] \pi(x) dx + \int_{\mathbb{R}^d} r(x) \delta_x(A) \pi(x) dx \\
+&= \int_A  \left[\int_{\mathbb{R}^d} \pi(x) p(x,y) dx\right] dy + \int_A r(x) \pi(x) dx \\
+&= \int_A  \left[\int_{\mathbb{R}^d} \pi(y) p(y,x) dx\right] dy + \int_A r(x) \pi(x) dx \\
+&= \int_A [1 - r(y)] \pi(y) dy + \int_A r(y) \pi(y) dy \\
+&= \int_A \pi(y) dy = \pi^*(A)
+\end{align*}
+
 To achieve this, the \textit{proposal density} $q(x,y)$ is balanced with an \textit{acceptance probability} that satisfies $\pi(x)q(x,y)\alpha(x,y) = \pi(y)q(y,x)\alpha(y,x)$.
-
-The Metropolis-Hastings algorithm have $p_\text{MH}(x,y) = q(x,y) \alpha(x,y)$ for $x \neq y$ with the acceptance probability
+Set $\alpha(y,x) = 1$ then $\alpha(x,y) = \frac{\pi(y)q(y,x)}{\pi(x)q(x,y)}$ if $\pi(x)q(x,y) \ge \pi(y)q(y,x)$; otherwise $\alpha(x,y) = 1$. This gives $p_\text{MH}(x,y) = q(x,y) \alpha(x,y)$ for $x \neq y$ with the acceptance probability
 $$
 \alpha(x,y) = \min \left(1, \frac{\pi(y) q(y,x)}{\pi(x) q(x,y)} \right)
 $$
-\textbf{Overall:} Simulate $y$ from the proposal density $q(x^{(i)},y)$ and accept the move with probability $\alpha(x^{(i)},y)$. If the proposed move is accepted, the next state is $x^{(i+1)} = y$. If the proposed move is rejected, the current value is repeated as the next state, i.e. $x^{(i+1)} = x^{(i)}$. 
+
+The transition kernel is
+$$
+P_\text{MH}(x, dy) = q(x,y) \alpha(x,y) dy + \left(1 - \int_{\mathbb{R}^d} q(x,y) \alpha(x,y) dy\right) \delta_x(dy)
+$$
 
 For symmetric proposal density $q(x,y) = q(y,x)$, the acceptance probability simplifies to $\alpha(x,y) = \min \left(1, \frac{\pi(y)}{\pi(x)} \right)$: move to higher density regions are always accepted.
 
+\begin{algorithm}
+\caption{Metropolis-Hastings Algorithm}
+\begin{algorithmic}
+\State \textbf{Initialize} $x^{(1)}$
+\For{$j = 1 \to N$}
+    \State Simulate $y \sim q(x^{(j)}, \cdot)$ \Comment{Propose a candidate from proposal distribution}
+    \State Simulate $u \sim U(0, 1)$ \Comment{Generate a random number for acceptance decision}
+    \If{$u \le \alpha(x^{(j)}, y)$} \Comment{Acceptance probability $\alpha(x, y) = \min\left(1, \frac{\pi(y)q(y, x)}{\pi(x)q(x, y)}\right)$}
+        \State Set $x^{(j+1)} = y$ \Comment{Accept the proposal and move to the new state}
+    \Else
+        \State Set $x^{(j+1)} = x^{(j)}$ \Comment{Reject the proposal and stay at the current state}
+    \EndIf
+\EndFor
+\State \textbf{Return} $\{x^{(1)}, x^{(2)}, \dots, x^{(N)}\}$
+\end{algorithmic}
+\end{algorithm}
+
 \subsection{Gibbs Sampling}
-\textbf{Product transition kernels:} the product kernel $P_1(x_1, dy_1,| x_2)P_2(x_2, dy_2 | y_1)$ has invariant density $\pi(y_1, y_2)$ if:
+\textbf{Product transition kernels:} the product kernel $P_1(x_1, dy_1| x_2)P_2(x_2, dy_2 | y_1)$ has invariant density $\pi(y_1, y_2)$ if:
 \begin{itemize}
 \item the conditional kernel $P_1(x_1, dy_1 | x_2)$ has invariant density $\pi_{1|2}(\cdot | x_2)$ for fixed $x_2$
 \item the conditional kernel $P_2(x_2, dy_2 | x_1)$ has invariant density $\pi_{2|1}(\cdot | x_1)$ for fixed $x_1$.
 \end{itemize}
 
-\textbf{Gibbs sampler:} set $P_1(x_1, dy_1 | x_2) = \pi^*_{1|2}(dy_1 | x_2)$ and $P_2(x_2, dy_2 | x_1) = \pi^*_{2|1}(dy_2 | x_1)$. For the move of $x_1$ with $x_2$ fixed, use exact conditional densities as the proposal denisites, i.e. $q([x_1, x_2], [y_1, y_2]) = \pi(y_1 | x_2)$ and $q([y_1, y_2],[x_1, x_2]) = \pi(x_1 | y_2)$. As a result, the acceptance probability is $\alpha = 1$ for all moves.
+\textit{*Proof:}
+\begin{align*}
+&\int \int P_1(x_1, dy_1 | x_2) P_2(x_2, dy_2 | y_1) \pi(x_1, x_2) dx_1 dx_2 \\
+&= \int P_2(x_2, dy_2 | y_1) \left[ \int P_1(x_1, dy_1 | x_2) \pi_{1|2}(x_1 | x_2) dx_1 \right] \pi_{2}(x_2) dx_2 \\
+&= \int P_2(x_2, dy_2 | y_1) \pi^*_{1|2}(dy_1 | x_2) \pi_{2}(x_2) dx_2 \\
+&= \int P_2(x_2, dy_2 | y_1) \pi_{2|1}(x_2 | y_1) \pi^*_1(dy_1) dx_2 \\
+&= \pi^*_1(dy_1) \int P_2(x_2, dy_2 | y_1) \pi_{2|1}(x_2 | y_1) dx_2 \\
+&= \pi^*_1(dy_1) \pi^*_{2|1}(dy_2 | y_1) = \pi^*(dy_1, dy_2)
+\end{align*}
+
+\textbf{Gibbs sampler:} set kernels to $P_1(x_1, dy_1 | x_2) = \pi^*_{1|2}(dy_1 | x_2)$ and $P_2(x_2, dy_2 | x_1) = \pi^*_{2|1}(dy_2 | x_1)$. Use exact conditional densities as the proposal denisites, i.e. for transition of $x_1$ with $x_2$ fixed, $q([x_1, x_2], [y_1, y_2]) = \pi(y_1 | x_2)$ and $q([y_1, y_2],[x_1, x_2]) = \pi(x_1 | y_2)$. As a result, the acceptance probability is $\alpha = 1$ for all moves.
+
+\begin{algorithm}
+\caption{Gibbs Sampler}
+\begin{algorithmic}[1]
+\For{$i = 1, \dots, N$}
+    \For{$j = 1, \dots, d$} \Comment{Update one dimension at a time}
+        \State $x^{(i)}_j \sim \pi(\cdot \mid x^{(i)}_1, \dots, x^{(i)}_{j-1}, x^{(i-1)}_{j+1}, \dots, x^{(i-1)}_d)$ \Comment{Sample from the conditionals}
+    \EndFor
+\EndFor
+\State \textbf{return} $x^{(0)}, \dots, x^{(N)}$
+\end{algorithmic}
+\end{algorithm}
 
 Limitation: small step sizes and poor mixing if the components are highly correlated.
 
@@ -219,20 +305,20 @@ Augment a target density $\pi(\theta)$ with $\phi$ to form $\pi(\theta, \phi)$. 
 \end{itemize}
 Inner product of functions: $\langle f, g \rangle = \int^b_a f(x) g(x) dx$ for $x \in [a,b] \in \mathbb{R}$.
 
-\textbf{Vector norm:} the length of a vector, defined as $\|x\| = \sqrt{\langle x, x \rangle}$. The norm satisfies:
+\textbf{Vector norm:} the length of a vector, satisfying:
 \begin{itemize}
     \item Schwarz inequality: $|\langle x, y \rangle| \leq \|x\| \|y\|$
     \item Triangle inequality: $\|x + y\| \leq \|x\| + \|y\|$
     \item Parallelogram law: $\|x + y\|^2 + \|x - y\|^2 = 2(\|x\|^2 + \|y\|^2)$
 \end{itemize}
 
-\textbf{Orthogonality:} two elements $x$ and $y$ are orthogonal if $\langle x, y \rangle = 0$. e.g. $\sin(x)$ and $\cos(x)$ are orthogonal on $[-\pi, \pi]$.
+\textbf{Orthogonality:} two elements $x$ and $y$ are orthogonal if and only if $\langle x, y \rangle = 0$. e.g. $\sin(x)$ and $\cos(x)$ are orthogonal on $[-\pi, \pi]$.
 
-\textbf{Orthonormal basis:} a finite set of linearly independent, orthogonal unit vectors with which every vector can be expressed as $x = \sum_{i=1}^n \alpha_i e_i$.
+\textbf{Orthonormal basis:} For a vector space $V$, a \textit{basis} is a \textit{finite} set of linearly independent, orthogonal unit vectors that can express any vector in $V$ as $x = \sum_{i=1}^n \alpha_i e_i$.
 
 \textbf{Cauchy sequence:} a sequence of vectors $\{x_n\}$ is a Cauchy sequence if for any $\epsilon > 0$, there exists a natural number $N$ such that for all $m, n > N$, $\|x_n - x_m\| < \epsilon$.
 
-If every Cauchy sequence in a vector space converges to a limit that is also in the vector space, then the vector space is \textit{complete}.
+If every Cauchy sequence in a vector space converges to a limit that is \textit{also in the vector space}, then the vector space is \textit{complete}.
 
 \textbf{Metric vector space:} a vector space with a distance function $\rho(x,y)$ that maps two vectors to a non-negative real number, satisfying:
 \begin{itemize}
@@ -241,23 +327,25 @@ If every Cauchy sequence in a vector space converges to a limit that is also in 
     \item $\rho(x,z) \leq \rho(x,y) + \rho(y,z)$ (triangle inequality)
 \end{itemize}
 
-\textbf{Normed space:} a metric space with distance function $\rho(x,y) = \|x - y\|$ induced by a non-negative norm $\|\cdot\|$.
+\textbf{Normed space:} a metric space with distance function $\rho(x,y) = \|x - y\|$ induced by a non-negative norm $\|\cdot\|$ for all $x, y \in V$.
 
-\textbf{Banach space:} a complete normed space. All finite-dimensional normed spaces are Banach spaces.
+\textbf{Banach space:} \textit{a complete normed space}. All finite-dimensional normed spaces are Banach spaces.
 
-The $l_p$ space is a Banach space where $\sum_{i=1}^\infty |x_i|^p < \infty$ for $p \geq 1$, and the norm is the $l^p$ norm $\|x\|_p = \left( \sum_{i=1}^n |x_i|^p \right)^{1/p}$.
+The $l_p$ space is a Banach space where $\sum_{i=1}^\infty |x_i|^p < \infty$ for $p \geq 1$. The norm is the $l^p$ norm $\|x\|_p = \left( \sum_{i=1}^n |x_i|^p \right)^{1/p}$.
 
-The $L_p$ space is a Banach space where $\int_a^b |f(x)|^p dx < \infty$, where $x$ is the Lebesgue measure. The norm is the $L^p$ norm $\|f\|_p = \left( \int_a^b |f(x)|^p dx \right)^{1/p}$.
+The $L_p$ space is a Banach space where $\int_a^b |f(x)|^p dx < \infty$, where $dx$ is the Lebesgue measure. The norm is the $L^p$ norm $\|f\|_p = \left( \int_a^b |f(x)|^p dx \right)^{1/p}$.
+The $L^p$ norm can be used to measure the complexity of a machine learning model.
 
 \section{Hilbert Spaces}
 \textbf{Pre-Hilbert space:} an incomplete inner product space.
 
-\textbf{Hilbert space:} a complete inner product space. For any $f$ in a Hilbert space with an infinite set of orthonormal vectors $\{e_i\}$,
+\textbf{Hilbert space:} \textit{a complete inner product space}. 
+
+Any $f$ in a Hilbert space can be expressed as $f = \sum_{i=1}^\infty \langle f, e_i \rangle \, e_i$. The infinite set of infinite-dimensional orthonormal vectors $\{e_i\}$ can be a basis if and only if 
 $$
 \{e_i\} \text{ is complete} \iff \|f\|^2 = \sum_{i=1}^\infty |\langle f, e_i \rangle|^2 \quad \text{(Parseval's identity)}
 $$
-
-$l^2$ and $L^2$ spaces are both Hilbert spaces.
+$l^2$ and $L^2$ spaces are both Hilbert spaces. The $L^2$ norm $\|f - g\|_2$ measures the closeness of functions in the mean but not necessarily pointwise. When $\|f - g\|_2 = 0$, there is \textit{equivalence almost everywhere} except for sets of measure zero. Hence, the $L^2$ space is a space of \textit{equivalence classes of functions}.
 
 \textbf{Equivalence of $l^2$ and $L^2$ spaces:} a function $f \in L^2$ can be represented with a sequence $\{c_k = \langle f, \phi_k \rangle\} \in l^2$ by Fourier series
 $$
@@ -269,15 +357,32 @@ $l^2$ and $L^2$ are isomorphic, i.e. there is a one-to-one correspondence betwee
 
 \textbf{Reproducing kernel Hilbert space (RKHS):} a Hilbert space of functions where point evaluation is continuous i.e. functions close in norm are also close pointwise.
 
-The \textit{reproducing kernel function} $K_x = K(x,y)$ reproduces function evaluation by inner product $f(x) = \langle f, K_x \rangle$. The kernel function is symmetric and positive definite, and uniquely defines the RKHS.
+The \textit{reproducing kernel function} $K_x = K(x, \cdot)$ reproduces function evaluation by inner product $f(x) = \langle f(\cdot), K_x(\cdot) \rangle$. The kernel function is symmetric and positive definite, and uniquely defines the RKHS.
 
-\textbf{Function approximation in RKHS:} Given data $\{(x_i, y_i)\}_{i=1}^n$ where $y_i = f(x_i)$, the regularised empicical error
+\textbf{Function approximation in RKHS:} Given data $\{(x_i, y_i)\}_{i=1}^n$ where $y_i = f(x_i)$, the regularised empirical error
 $$
-\frac{1}{N}\sum_{n=1}^N |y_i - f(x_i)|^2 + \lambda \|f\|^2
+\frac{1}{N}\sum_{n=1}^N |y_n - f(x_n)|^2 + \lambda \|f\|^2
 $$
-is minimised by functions of the form
+is minimised by approximating functions of the form
 $$\hat{f}(\cdot) = \sum_{n=1}^N \alpha_n K(x_n, \cdot)$$
-where $\alpha = (K + N \lambda I)^{-1} y$ and $K$ is the kernel matrix with $K_{ij} = K(x_i, x_j)$. The term $\lambda \|f\|^2$ penalises the complexity of the function and prevents overfitting.
+\textit{*Solution:}
+\begin{align*}
+\sum_{n=1}^N |y_n - \hat{f}(x_n)|^2 = \sum_{n=1}^N \left|y_n - \sum_{m=1}^N \alpha_m K(x_m, x_n)\right|^2 = (K\alpha - y)^\top (K\alpha - y) \\
+\|\hat{f}\|^2 = \langle \hat{f}, \hat{f} \rangle = \sum_{n=1}^N \sum_{m=1}^N \alpha_n \alpha_m \langle K(x_n, \cdot), K(x_m, \cdot) \rangle = \sum_{n=1}^N \sum_{m=1}^N \alpha_n \alpha_m K(x_n, x_m) = \alpha^\top K \alpha
+\end{align*}
+The third equality follows from the reproducing property of the kernel $f = \langle f, k \rangle$.
+
+Taking derivative with respect to $\alpha$ gives:
+$$
+\frac{\partial}{\partial \alpha} \left[ \frac{1}{N}(K\alpha - y)^\top (K\alpha - y) + \lambda \alpha^\top K \alpha \right] = \frac{2}{N} K(K\alpha - y) + 2\lambda K \alpha
+$$
+Setting the derivative to zero
+\begin{align*}
+\frac{1}{N} K(K\alpha - y) + \lambda K \alpha &= 0 \\
+(K + N\lambda I) \alpha &= y \\
+\alpha &= (K + N\lambda I)^{-1} y
+\end{align*}
+The term $\lambda \|f\|^2$ penalises the complexity of the function and prevents overfitting.
 
 \section{Sobolev Spaces}
 \textbf{Sobolev space:} a Sobolev space $W^k_p(\Omega)$ is a Banach space where functions $f \in L^p(\Omega)$ have \textit{weak derivatives} $D^s f \in L^p(\Omega)$ for $0 \leq s \leq k$. The norm is defined as
@@ -301,35 +406,64 @@ $$
 The approximating functions $f_n(x) = \sum^n_{k=0} c_k \exp(ikx)$ are in the Sobolev space $W^s_2$ with the norm
 $\|f\|^2_{W^s_2} = \| D^s f \|^2_{L^2} = \sum_{k=0}^\infty k^{2s} c_k^2$.
 
-The appoximation error is bounded
-$$
-\|f - f_n\|^2_{L^2} = \sum_{k=n+1}^\infty c_k^2 < \frac{1}{n^{2s}} \|f\|^2_{W^s_2}
-$$
-as $s$ increases, the approximation error decreases faster with increasing $n$.
+*The approximation error is bounded as
+\begin{align*}
+\|f - f_n\|^2_{L^2} &= \sum_{k=n+1}^\infty c_k^2 = \sum_{k=n+1}^\infty \frac{1}{k^{2s}} k^{2s} c_k^2 \\
+&< \frac{1}{n^{2s}} \sum_{k=n+1}^\infty k^{2s} c_k^2 <  \frac{1}{n^{2s}} \sum_{k=0}^\infty k^{2s} c_k^2 \\
+&= \frac{1}{n^{2s}} \|f\|^2_{W^s_2}
+\end{align*}
+As $s$ increases, the approximation error decreases faster with increasing $n$.
 
-For $d$-dimensional domains, the error bound is $\|f - f_n\|^2_{L^2} < \frac{1}{n^{2s/d}} \|f\|^2_{W^s_2}$, which shows the curse of dimensionality -- convergence rate decreases as $d$ increases.
+For $d$-dimensional domains, the error bound is $$\|f - f_n\|^2_{L^2} < \frac{1}{dn^\frac{2s}{d}} \|f\|^2_{W^s_2}$$ which shows the curse of dimensionality -- convergence rate decreases as $d$ increases.
 
 \section{Gaussian Measures in Hilbert Space}
 \textbf{Lebesgue measure in $D$ dimensions:} $\mu = \prod_{d=1}^D \mu_d$.
 
 There is no Lebesgue measure in infinite dimensional Hilbert or Banach spaces.
 
-\textbf{Gaussian measure in infinite dimensions:} a Gaussian measure is a probability measure characterised by a mean function and a covariance operator.
+\textit{*Proof:}
+\begin{itemize}
+\item A Hilbert space $H$ has an associated basis $\{e_i\}_{i=1}^\infty$. 
+\item Denote a ball of radius $r$ with center at $x$ as $B(x,r)$. 
+\item For a ball $B(0,2)$, place a ball of radius $\frac{1}{2}$ at each basis vector $e_i$: $\{B(e_i, \frac{1}{2})\}_{i=1}^\infty$.
+\item The balls do not intersect with each other: $B(e_i, \frac{1}{2}) \cap B(e_j, \frac{1}{2}) = \emptyset$ for $i \neq j$.
+\item And the union of all balls is a subset of $B(0, 2)$: $\bigcup_{i=1}^\infty B(e_i, \frac{1}{2}) \subset B(0, 2)$.
+\item Since the Lebesgue measure in infinite dimensions is \textit{translation invariant}, $\mu(B(e_i, \frac{1}{2})) = \mu(B(e_j, \frac{1}{2}))$ for all $i, j$.
+\item \textit{Monotonicity} and \textit{countable additivity} gives $\sum_{i=1}^\infty \mu(B(e_i, \frac{1}{2})) \leq \mu(B(0, 2))$.
+\item The Lebesgue measure $\mu(B(0,2)) < \infty$, but $\sum_{i=1}^{\infty} \mu(B(e_i, \frac{1}{2})) = \infty$, which is a contradiction. Therefore the Lebesgue measure is not well-defined in infinite dimensional Hilbert spaces.
+\end{itemize}
+
+\textbf{Gaussian measure:} The standard Gaussian measure is
+$$
+g(B) = \frac{1}{\sqrt{2\pi}} \int_B \exp\left(-\frac{x^2}{2}\right) dx
+$$
+For a product measure $\mu = \prod_{d=1}^\infty g_k$ on $\mathbb{R}^\infty$ to be well defined, $\exp\left(-\frac{1}{2}\sum_{k=1}^\infty x_k^2\right)$ is finite and non-zero. So $\sum_{k=1}^\infty x_k^2 < \infty$, which is the definition of $l_2$:
+$$
+x \in l_2 = \{x \in \mathbb{R}^\infty : \sum_{k=1}^\infty x_k^2 < \infty\}
+$$
+\textbf{Gaussian measure in infinite dimensions:} A Gaussian measure is a probability measure characterised by a mean function and a covariance operator.
 
 Diagonal covariance operator: $S_x = (a_n x_n)^{\infty}_{n=1}$ for $x \in l^2$ subject to $\sum_{k=1}^\infty a_k < \infty$.
 
-Full covariance operators: need to be trace class, i.e. $\text{Tr}(C) = \sum_{n=1}^\infty \langle e_k, C e_k \rangle < \infty$ for an orthonormal basis $\{e_k\}$. Given an covariance function $c(x,y)$
-$$
-C e_k(x) = \int c(x,y) e_k(y) dy
-$$
+Full covariance operators: need to be \textit{trace class}, i.e. the trace $\text{Tr}(C)$ is finite
+$$\text{Tr}(C) = \sum_{n=1}^\infty \langle e_n, C e_n \rangle < \infty$$
+The inner product $\langle e_n, C e_n \rangle$ is
+\begin{align*}
+    \langle e_n, C e_n \rangle &= \mathbb{E}[(e_n, u)(u, e_n)] \\
+    &= \mathbb{E}\left[\int_\Omega \int_\Omega e_n(x) [u(x)u(y)] e_n(y) \, dy \, dx\right] \\
+    &= \mathbb{E}\left[\int_\Omega e_n(x) \left(\int_\Omega u(x)u(y) e_n(y) dy\right) dx\right] \\
+    &= \int_\Omega e_n(x) \left(\int_\Omega \mathbb{E}[u(x)u(y)] e_n(y) dy\right) dx \\
+    &= \int_\Omega e_n(x) \left(\int_\Omega c(x,y) e_n(y) dy\right) dx
+\end{align*}
+where $c(x,y) = \mathbb{E}[u(x)u(y)]$ is the covariance function and $C e_n(x) = \int_\Omega c(x,y) e_n(y) dy$.
 
 \textbf{Gaussian measures in Hilbert space:} In a Hilbert space, two Gaussian measures are either equivalent or singular.
 
-\textit{Equivalent:} also known as mutually absolutely continuous, two measures $P$ and $Q$ are equivalent if $P(A) = 0$ if and only if $Q(A) = 0$ for any measurable set $A$.
+\textit{Equivalent (mutually absolutely continuous):} Two measures are equivalent if they both assign zero measure to the same sets.
 
-\textit{Singular:} two measures $P$ and $Q$ are singular if there exists a measurable set $A$ such that $P(A) = 1$ and $Q(A) = 0$.
+\textit{Singular:} Two measures are singular w.r.t each other if one measure assigns zero to a set and the other measure assigns zero measure to the set complement.
 
-For two Gaussian measures $\mathcal{N}(0, C)$ and $\mathcal{N}(v, C)$ in $l^2$, two measures are equivalent if $v \in \text{Image}(C^{1/2})$ i.e. $v = C^{1/2} u$ for some $u \in l^2$, and singular otherwise. The subspace for $v$ is the Cameron-Martin space, also the reproducing kernel Hilbert space (RKHS).
+For two Gaussian measures $\mathcal{N}(0, C)$ and $\mathcal{N}(v, C)$ in $l^2$, two measures are equivalent if $v \in \text{Image}(C^{1/2})$ i.e. $v = C^{1/2} u$ for some $u \in l^2$, and singular otherwise. The subspace for $v$ is the Cameron-Martin space (aka the reproducing kernel Hilbert space).
 
 \textbf{Bayes' rule in Hilbert space}: The Radom-Nikodym derivative of the posterior probability measure with respect to the prior probability measure is given by
 $$
