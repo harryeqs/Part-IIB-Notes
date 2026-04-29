@@ -37,7 +37,7 @@ $$
 \tilde{f}(x) = \frac{f(x) - \mathbb{E}[f(x)]}{\sigma_f}
 $$
 Define $S_N = \frac{1}{N} \sum_{n=1}^N \tilde{f}(x_n)$ and $Z_N = \frac{S_N}{\sqrt{N}}$.
-The moment generating of $Z_N$ is 
+The moment generating function of $Z_N$ is 
 \begin{align*}
 M_{Z_N}(t) &= \mathbb{E}[\exp(t Z_N)] = \mathbb{E}\left[ \exp\left(t \frac{S_N}{\sqrt{N}}\right)\right] \\
 &= \mathbb{E}\left[ \exp\left(\frac{t}{\sqrt{N}} \sum_{n=1}^N \tilde{f}(x_n)\right)\right] \\
@@ -71,7 +71,7 @@ $$
 \sigma_f^2 - \sigma_{\bar{f}}^2 = \int f(x)^2 p(x) dx - \int f(x)^2 \frac{p(x)^2}{q(x)} dx
 $$
 
-The biggest decrease in variance is achived when $q(x) \propto |f(x)| p(x)$.
+The biggest decrease in variance is achieved when $q(x) \propto |f(x)| p(x)$, leading to $\sigma_{\bar{f}}^2 = 0$.
 
 \textbf{Control variates:} use another function $g(x)$ with known expectation $\mathbb{E}[g(x)]$ to reduce the variance of the Monte Carlo estimate. The new estimator is
 $$
@@ -110,7 +110,7 @@ Limitations:
 \textbf{Convergence of functions:}
 \begin{itemize}
     \item \textit{Pointwise convergence:} Given $\epsilon > 0$, there exists a natural number $N(\epsilon, x)$ such that for $n > N$, $|f_n(x) - f(x)| < \epsilon$. Does not preserve continuity.
-    \item \textit{Uniform convergence:} Given $\epsilon > 0$, there exists a natural number $N(\epsilon)$ such that for $n > N$, $|f_n - f| < \epsilon, \forall x \in D$. Preserves continuity.
+    \item \textit{Uniform convergence:} Given $\epsilon > 0$, there exists a natural number $N(\epsilon)$ such that for $n > N$, $|f_n - f| < \epsilon, \forall x \in D$. Preserves continuity and \textit{allows exchange of limit and integral.}
 \end{itemize}
 
 \textbf{Lebesgue integral:} Partition the range of the function instead of the domain. For $0 \leq f_\text{min} \leq f(x) \leq f_\text{max}$, the range is partitioned into $f_\text{min} = f_1, f_2, \dots, f_n = f_\text{max}$. For each $f_k$, there are sets of values $X_k$ such that $f_k \leq f(x) < f_{k+1}$ for $x \in X_k$, and the size (measure) of each set is $\mu(X_k)$.
@@ -121,7 +121,7 @@ Advantages:
 \begin{itemize}
     \item Only requires a measure of sets on the domain of integration -- more general
     \item Change of order of limit and integration only requires pointwise convergence.
-    \item A Riemann integrable funcion is also Lebesgue integrable, but not vice versa.
+    \item A Riemann integrable function is also Lebesgue integrable, but not vice versa.
 \end{itemize}
 
 \textbf{Measure of sets:} A set $X$ and a set $\Sigma$ generated from $X$ (contains $X$, $\emptyset$, and other subsets of $X$, closed under countable complementation, union and intersections) defines a \textit{measurable set} $\{X, \Sigma\}$. Along with a measure $\mu$ it defines a \textit{measure space} $\{X, \Sigma, \mu\}$.
@@ -130,8 +130,8 @@ Rules for measure:
 \begin{itemize}
     \item If $\mu(E) \geq 0$ for all $E \in \Sigma$, all elements in $\Sigma$ are measurable.
     \item $\mu(\emptyset) = 0$.
-    \item If $E_i \subseteq E_j$, then $\mu(E_i) \leq \mu(E_j)$.
-    \item $\mu \left(\bigcup_{i=1}^\infty E_i\right) = \sum_{i=1}^\infty \mu(E_i)$ for disjoint sets $E_i \in \Sigma$.
+    \item If $E_i \subseteq E_j$, then $\mu(E_i) \leq \mu(E_j)$. (Monotonicity)
+    \item $\mu \left(\bigcup_{i=1}^\infty E_i\right) = \sum_{i=1}^\infty \mu(E_i)$ for disjoint sets $E_i \in \Sigma$. (Countable additivity)
     \item If $(X, \Sigma_X)$ and $(Y, \Sigma_Y)$ are both measurable, then a function $f: X \to Y$ is measurable if $f^{-1}(B) \in \Sigma_X$ for all $B \in \Sigma_Y$.
 \end{itemize}
 
@@ -156,7 +156,7 @@ The expectation of a random variable $X$ is defined as $\mathbb{E}[X] = \int_\Om
 
 \textbf{Radon-Nikodym theorem:} Consider two measures $\mu$ and $\nu$ on a measurable space $\{X, \Sigma\}$. If for every $A \in \Sigma$ where $\nu(A) = 0$ also have $\mu(A) = 0$, then $\mu$ is \textit{absolutely continuous} with respect to $\nu$, denoted as $\mu \ll \nu$.
 
-Given a probability mesure $P$, a new probability measure $Q$ can be defined if there exists a function $L(\omega)$ such that $dQ(\omega) = L(\omega) dP(\omega)$.
+Given a probability measure $P$, a new probability measure $Q$ can be defined if there exists a function $L(\omega)$ such that $dQ(\omega) = L(\omega) dP(\omega)$.
 
 For any measurable set $B$, $Q(B) = \int_B L(\omega) dP(\omega)$ is the probability of $B$ under the new measure $Q$.
 
@@ -203,7 +203,7 @@ $$
 $$
 If $p(x, x) = 0$ and $\int_{\mathbb{R}^d} P(x,dy) = 1$, then $r(x) = 1 - \int_{\mathbb{R}^d} p(x,y) dy$ is the probability that the chain remains at $x$.
 
-If $p(x,y)$ satisfies detailed balance $\pi(x)p(x,y) = \pi(y)p(y,x)$, then $\pi(\cdot)$ is the invariant density of the transition kernel $P(x, \cdot)$.
+If $p(x,y)$ satisfies detailed balance $\pi(x)p(x,y) = \pi(y)p(y,x)$, then $\pi(\cdot)$ is the invariant density of the transition kernel $P(x, \cdot)$. In this case the transition kernel is reversible, i.e. $P(x, dy) \pi(dx) = P(y, dx) \pi(dy)$.
 
 \textit{*Proof:} 
 \begin{align*}
@@ -224,9 +224,6 @@ The transition kernel is
 $$
 P_\text{MH}(x, dy) = q(x,y) \alpha(x,y) dy + \left(1 - \int_{\mathbb{R}^d} q(x,y) \alpha(x,y) dy\right) \delta_x(dy)
 $$
-
-For symmetric proposal density $q(x,y) = q(y,x)$, the acceptance probability simplifies to $\alpha(x,y) = \min \left(1, \frac{\pi(y)}{\pi(x)} \right)$: move to higher density regions are always accepted.
-
 \begin{algorithm}
 \caption{Metropolis-Hastings Algorithm}
 \begin{algorithmic}
@@ -261,7 +258,7 @@ For symmetric proposal density $q(x,y) = q(y,x)$, the acceptance probability sim
 &= \pi^*_1(dy_1) \pi^*_{2|1}(dy_2 | y_1) = \pi^*(dy_1, dy_2)
 \end{align*}
 
-\textbf{Gibbs sampler:} set kernels to $P_1(x_1, dy_1 | x_2) = \pi^*_{1|2}(dy_1 | x_2)$ and $P_2(x_2, dy_2 | x_1) = \pi^*_{2|1}(dy_2 | x_1)$. Use exact conditional densities as the proposal denisites, i.e. for transition of $x_1$ with $x_2$ fixed, $q([x_1, x_2], [y_1, y_2]) = \pi(y_1 | x_2)$ and $q([y_1, y_2],[x_1, x_2]) = \pi(x_1 | y_2)$. As a result, the acceptance probability is $\alpha = 1$ for all moves.
+\textbf{Gibbs sampler:} set kernels to $P_1(x_1, dy_1 | x_2) = \pi^*_{1|2}(dy_1 | x_2)$ and $P_2(x_2, dy_2 | x_1) = \pi^*_{2|1}(dy_2 | x_1)$. Use exact conditional densities as the proposal densities, i.e. for transition of $x_1$ with $x_2$ fixed, $q([x_1, x_2], [y_1, y_2]) = \pi(y_1 | x_2)$ and $q([y_1, y_2],[x_1, x_2]) = \pi(x_1 | y_2)$. As a result, the acceptance probability is $\alpha = 1$ for all moves.
 
 \begin{algorithm}
 \caption{Gibbs Sampler}
@@ -345,7 +342,9 @@ Any $f$ in a Hilbert space can be expressed as $f = \sum_{i=1}^\infty \langle f,
 $$
 \{e_i\} \text{ is complete} \iff \|f\|^2 = \sum_{i=1}^\infty |\langle f, e_i \rangle|^2 \quad \text{(Parseval's identity)}
 $$
-$l^2$ and $L^2$ spaces are both Hilbert spaces. The $L^2$ norm $\|f - g\|_2$ measures the closeness of functions in the mean but not necessarily pointwise. When $\|f - g\|_2 = 0$, there is \textit{equivalence almost everywhere} except for sets of measure zero. Hence, the $L^2$ space is a space of \textit{equivalence classes of functions}.
+*$l^2$ and $L^2$ spaces are both Hilbert spaces.
+
+The norm of a Hilbert space is induced by the inner product $\|f\| = \sqrt{\langle f, f \rangle}$. The $L^2$ norm $\|f - g\|_2$ measures the closeness of functions in the mean but not necessarily pointwise. When $\|f - g\|_2 = 0$, there is \textit{equivalence almost everywhere} except for sets of measure zero. Hence, the $L^2$ space is a space of \textit{equivalence classes of functions}.
 
 \textbf{Equivalence of $l^2$ and $L^2$ spaces:} a function $f \in L^2$ can be represented with a sequence $\{c_k = \langle f, \phi_k \rangle\} \in l^2$ by Fourier series
 $$
@@ -401,7 +400,7 @@ $$
 \int_0^1 f(x) g'(x) dx = -\int_0^1 h(x) g(x) dx
 $$
 
-\textbf{Function approximation by polynomial expansion:} By Fourier expansion, functions from the set $C_2[-\pi, \pi] = C[-\pi, \pi] \cap L^2[-\pi, \pi]$ can be presented as $f(x) = \sum_{k=0}^\infty c_k \exp(ikx)$ with $c_k = \frac{1}{2\pi} \int_{-\pi}^{\pi} f(x) \exp(-ikx) dx$. The $L^2$ norm of $f$ is $\|f\|^2 = \sum_{k=0}^\infty c_k^2$.
+\textbf{Function approximation by polynomial expansion:} By Fourier expansion, functions from the set $C_2[-\pi, \pi] = C[-\pi, \pi] \cap L^2[-\pi, \pi]$ can be represented as $f(x) = \sum_{k=0}^\infty c_k \exp(ikx)$ with $c_k = \frac{1}{2\pi} \int_{-\pi}^{\pi} f(x) \exp(-ikx) dx$. The $L^2$ norm of $f$ is $\|f\|^2 = \sum_{k=0}^\infty c_k^2$.
 
 The approximating functions $f_n(x) = \sum^n_{k=0} c_k \exp(ikx)$ are in the Sobolev space $W^s_2$ with the norm
 $\|f\|^2_{W^s_2} = \| D^s f \|^2_{L^2} = \sum_{k=0}^\infty k^{2s} c_k^2$.
@@ -409,7 +408,7 @@ $\|f\|^2_{W^s_2} = \| D^s f \|^2_{L^2} = \sum_{k=0}^\infty k^{2s} c_k^2$.
 *The approximation error is bounded as
 \begin{align*}
 \|f - f_n\|^2_{L^2} &= \sum_{k=n+1}^\infty c_k^2 = \sum_{k=n+1}^\infty \frac{1}{k^{2s}} k^{2s} c_k^2 \\
-&< \frac{1}{n^{2s}} \sum_{k=n+1}^\infty k^{2s} c_k^2 <  \frac{1}{n^{2s}} \sum_{k=0}^\infty k^{2s} c_k^2 \\
+&< \frac{1}{n^{2s}} \sum_{k=n+1}^\infty k^{2s} c_k^2 <  \frac{1}{n^{2s}} \sum_{k=1}^\infty k^{2s} c_k^2 \\
 &= \frac{1}{n^{2s}} \|f\|^2_{W^s_2}
 \end{align*}
 As $s$ increases, the approximation error decreases faster with increasing $n$.
@@ -465,7 +464,7 @@ where $c(x,y) = \mathbb{E}[u(x)u(y)]$ is the covariance function and $C e_n(x) =
 
 For two Gaussian measures $\mathcal{N}(0, C)$ and $\mathcal{N}(v, C)$ in $l^2$, two measures are equivalent if $v \in \text{Image}(C^{1/2})$ i.e. $v = C^{1/2} u$ for some $u \in l^2$, and singular otherwise. The subspace for $v$ is the Cameron-Martin space (aka the reproducing kernel Hilbert space).
 
-\textbf{Bayes' rule in Hilbert space}: The Radom-Nikodym derivative of the posterior probability measure with respect to the prior probability measure is given by
+\textbf{Bayes' rule in Hilbert space}: The Radon-Nikodym derivative of the posterior probability measure with respect to the prior probability measure is given by
 $$
 \frac{d\mu^y}{d\mu^0} \propto \underbrace{P(y|x)}_{\text{likelihood}}
 $$
@@ -474,13 +473,14 @@ In a infinite dimensional Hilbert space, the prior measure over functions is a G
 \section{MCMC in Infinite-Dimensional Spaces}
 \textbf{Metropolis-Hastings algorithm in infinite dimensions:} Define a proposal $$v = \sqrt{1-\beta^2} u + \beta\xi, \xi \sim \mathcal{N}(0, C)$$ such that $u$ and $v$ both follow $\mathcal{N}(0, C)$. 
 Given a prior Gaussian measure $\mu^0 = \mathcal{N}(0, C)$ and a likelihood $P(y|v) = \exp(- \Phi(v))$,
-the acceptance probability (replacing $\pi(v)q(v, u)$ with $\mu^y(dv)q(u, dv)$, where $\mu^y$ is the posterior measure) is 
+the acceptance probability (replacing $\pi(v)q(v, u)$ with $\mu^y(dv)q(dv, u)$, where $\mu^y$ is the posterior measure) is 
 $$\alpha(u,v) = \min\left(1, \frac{\mu^y(dv)q(v, du)}{\mu^y(du)q(u, dv)}\right) = \min\left(1, \frac{P(y|v)}{P(y|u)}\right) = \min\left(1, \exp(\Phi(u) - \Phi(v))\right)$$
 
+For $v = u + \beta \xi, \xi \sim \mathcal{N}(0, C)$ the acceptance probability is $\min(1, \exp(J(v) - J(u)))$, where $J(v) = - \Phi(v) - \frac{1}{2}|C^{-1/2} v|^2$. The expectation of the norm $\mathbb{E}[|C^{-1/2} v|^2]$ is infinite.  
 
 \section{Langevin Dynamics}
-\textbf{Langevin stochastic differential equation (SDE):} $$dX_t = -\nabla U(X_t) dt + \sqrt{2} dB_t = \nabla \log \pi(X_t) dt + \sqrt{2} dB_t$$
-where $U(\cdot): \mathbb{R}^d \to \mathbb{R}$ is a potential function, $B_t$ is the Brownian motion and $\pi(x) \propto \exp(-U(x))$ is the stationary distribution of the SDE.
+\textbf{Langevin stochastic differential equation (SDE):} $$dX_t = -\nabla_x U(X_t) dt + \sqrt{2} dB_t = \nabla_x \log \pi(X_t) dt + \sqrt{2} dB_t$$
+where $U(\cdot): \mathbb{R}^d \to \mathbb{R}$ is a potential function, $(B_t)_{t \geq 0}$ is the Brownian motion and $\pi(x) \propto \exp(-U(x))$ is the stationary distribution of the SDE.
 
 The measure of $X_t$, $\rho_t$, satisfies the Fokker-Planck equation
 $$
@@ -497,6 +497,10 @@ $$
 \pi(\lambda x + (1-\lambda) y) \geq \pi(x)^\lambda \pi(y)^{1-\lambda} \exp\left( \frac{m}{2} \lambda (1-\lambda) \|x-y\|^2 \right) \text{ for } 0 < \lambda < 1
 $$
 i.e. there are no flat regions and the maximum is unique.
+For one dimension
+$$
+\nabla^2 \log \pi(x) \leq -m < 0 \; \forall x
+$$
 
 \textbf{Convergence of Langevin dynamics:} For an m-strongly log-concave $\pi$, the convergence rate to the stationary measure is exponentially fast
 $$
@@ -534,10 +538,10 @@ The complexity is $\mathcal{O}(|\mathcal{I}_k|)$, and convergence rate is simila
 \section{Energy-Based and Score-Based Models}
 \textbf{Generative models:} approximate the data distribution $p_\text{data}$ with a model distribution $p_\theta$, by learning parameters $\theta$ from data $\mathcal{D} = \{x_i\}_{i=1}^N$ drawn from $p_\text{data}$. 
 
-\textbf{Energy-based models (EBMs):} The probability of a state $x$ is defined as 
+\textbf{Energy-based models:} The probability of a state $x$ is defined as 
 $$p(x) = \frac{1}{Z_\beta} \exp(-\beta E(x))$$
 where $E(x)$ is the energy function, $\beta$ is the inverse temperature and $Z_\beta = \int \exp(-\beta E(x)) dx$ is the partition function.
-EBMs paratermises the energy function, giving $p_\theta(x) \propto \exp(-E_\theta(x))$.
+EBMs parameterise the energy function, giving $p_\theta(x) \propto \exp(-E_\theta(x))$.
 
 The EBMs are trained via maximum likelihood or contrastive divergence.
 
@@ -562,7 +566,7 @@ Limitations: bias in the gradient estimate and MCMC can be very slow.
 \textbf{Score-based models:} Learn to match the score function $s_\theta(x) = \nabla_x \log p_\theta(x) = -\nabla_x E_\theta(x)$, bypassing the partition function.
 Trained by score matching, which minimises the Fisher divergence between $p_\text{data}$ and $p_\theta$:
 $$
-J(\theta) = \frac{1}{2} \mathbb{E}_{x \sim p_\text{data}}\left[\|s_\theta(x) - \underbrace{\nabla \log p_\text{data}(x)}_{\text{intractable}}\|^2\right]
+J(\theta) = \frac{1}{2} \mathbb{E}_{x \sim p_\text{data}}\left[\|s_\theta(x) - \underbrace{\nabla_x \log p_\text{data}(x)}_{\text{intractable}}\|^2\right]
 $$
 which can be rewritten as
 $$
