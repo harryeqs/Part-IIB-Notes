@@ -28,7 +28,7 @@
 \textbf{Adjacency matrix $A$:} binary valued and symmetric matrix with
 $$A_{ij} =
 \begin{cases}
-1 & \text{if there is an edge from node $i$ to node $j$} \\m
+1 & \text{if there is an edge from node $i$ to node $j$} \\
 0 & \text{otherwise}
 \end{cases}
 $$
@@ -37,7 +37,7 @@ $$
 $$k_i = \sum_{j=0}^{n-1} A_{ij}$$
 The average (mean) degree is $k = \frac{1}{n} \sum_{i=0}^{n-1} k_i = \frac{2m}{n}$.
 
-\textbf{Bipartite graph:} a graph where the nodes can be split into 2 groups, such that all edges fall between groups and non within groups.
+\textbf{Bipartite graph:} a graph where the nodes can be split into 2 groups, such that all edges fall between groups and none within groups.
 
 \textbf{Components:} a maximal set of nodes that can be reached from on another. An undirected graph is \textit{connected} if it has only one component.
 
@@ -48,10 +48,10 @@ The average (mean) degree is $k = \frac{1}{n} \sum_{i=0}^{n-1} k_i = \frac{2m}{n
 \section{Network Metrics}
 \subsection{Node Importance}
 \textbf{Eigenvector centrality:} the importance of a node ($x_i$) is proportional to the sum of the importance of its neighbors.
-$$x_i = \alpha \sum_{j=0}^{n-1} A_{ij} x_j$$ For some constant $\alpha$. In matrix form, $\mathbf{x} = \alpha A \mathbf{x}$, which means $\mathbf{x}$ is an eigenvector of $A$. If $x_i \geq 0$, the solution is unique and will correspond to the eigenvector of $A$ with the largest eigenvalue.
+$$x_i = \alpha \sum_{j=0}^{n-1} A_{ij} x_j$$ For some constant $\alpha$. In matrix form, $\boldsymbol{x} = \alpha A \boldsymbol{x}$, which means $\boldsymbol{x}$ is an eigenvector of $A$. If $x_i \geq 0$, the solution is unique and will correspond to the eigenvector of $A$ with the largest eigenvalue.
 
 \textbf{PageRank:} the importance of a node is the probability that a websurfer is on that node in the long time limit. The websurfer randomly clicks an random outgoing link with probability $\alpha$ and jumps to a random node with probability $1 - \alpha$.
-$$x_i = \alpha \sum_{j=0}^{n-1} \underbrace{\frac{A_{ij}}{k_j} x_j}_{\text{click from $j$}} + \underbrace{\frac{1 - \alpha}{n}}_{\text{random jump}}$$
+$$x_i = \alpha \sum_{j=0}^{n-1} \underbrace{\left(\frac{A_{ji}}{k_j}\right)}_{\text{click from $j$}}x_j + \underbrace{\frac{1 - \alpha}{n}}_{\text{random jump}}$$
 
 Considering the probability of going $k$ steps without teleporting
 $$x_i = \sum_{k=0}^{\infty} (1 - \alpha) \alpha^k \, \left(\frac{1}{n} \sum_{j=0}^{n-1} (W^k)_{ji}\right) = \frac{1-\alpha}{n} \sum_{j=0}^{n-1} \left((I - \alpha W)^{-1}\right)_{ji}$$
@@ -68,12 +68,12 @@ For a fully connected graph, $b_i = 0$ for all nodes $i$. For two separate fully
 A triangle forms when $$A_{ij} A_{jk} A_{ik} = 1$$
 
 \textbf{Local clustering coefficient:} 
-$$c_i = \frac{\text{\# triangles with node $i$}}{\text{\# maximum possible triangles with node $i$}} = \frac{\sum_{j,k} A_{ij} A_{jk} A_{ik}}{k_i(k_i - 1)}$$
+$$c_i = \frac{2 \times \text{\# triangles with node $i$}}{2 \times \text{\# maximum possible triangles with node $i$}} = \frac{\sum_{j,k} A_{ij} A_{jk} A_{ik}}{k_i(k_i - 1)}$$
 
-A clustering coefficient for the whole network can be defined as the average of $c_i$, $c = \frac{1}{n} \sum_i c_i$.
+A clustering coefficient for the whole network is the average of $c_i$: $c = \frac{1}{n} \sum_i c_i$.
 
 \textbf{Global clustering coefficient (transitivity):}
-$$c = \frac{\text{\# triangles}}{\text{\# maximum possible triangles}} = \frac{\sum_{i,j,k} A_{ij} A_{jk} A_{ik}}{\sum_i k_i(k_i - 1)}$$
+$$c = \frac{6 \times \text{\# triangles}}{6 \times \text{\# maximum possible triangles}} = \frac{\sum_{i,j,k} A_{ij} A_{jk} A_{ik}}{\sum_i k_i(k_i - 1)}$$
 
 \subsection{Assortativity and Modularity}
 Motivation: `homophily' – nodes with similar properties tend to connect to each other.
@@ -83,10 +83,13 @@ $$
 r = \frac{\text{cov}(x_i, x_j)}{\sqrt{\text{var}(x_i)\text{var}(x_j)}} = \frac{\frac{1}{2m} \sum_{i,j} A_{ij} x_i x_j \, - \, \left(\frac{1}{2m}\sum_i k_i x_i\right)^2}{\frac{1}{2m}\sum_i k_i x_i^2 \, - \, \left(\frac{1}{2m}\sum_i k_i x_i\right)^2}
 $$
 
-If $x_i = x_j$ whenever $A_{ij} = 1$, then $r = 1$ and corresponds to perfect assortativity. 
-Conversely, if $x_i = -x_j$ whenever $A_{ij} = 1$, then $r = -1$ and corresponds to perfect disassortativity.
+If $x_i = x_j$ whenever $A_{ij} = 1$, then $r = 1$ and corresponds to \textit{perfect assortativity}. 
+If $x_i = -x_j$ whenever $A_{ij} = 1$, then $r = -1$ and corresponds to \textit{perfect disassortativity}.
 
-\textbf{Modularity:} generalises assortativity for categories, beyond numerical quantities. Notations: $g_i$ = category of node $i$, $\delta_{g_i,r} = 1$ if $g_i = r$ and 0 otherwise.
+\textbf{Modularity:} generalises assortativity for categories, beyond numerical quantities.
+
+Notations: $g_i$ = category of node $i$, $\delta_{g_i,r} = 1$ if $g_i = r$ and 0 otherwise.
+
 The modularity score quantifies how likely nodes in group $r$ are connect to others in the same group:
 $$
 Q = \sum_r \left( \frac{1}{2m}\sum_{i,j} A_{ij} \underbrace{\delta_{g_i,r} \delta_{g_j,r}}_{\delta_{g_i, g_j}} - \left(\frac{1}{2m}\sum_i k_i \delta_{g_i,r}\right)^2 \right)
@@ -111,8 +114,8 @@ Define $W_{ij} = A_{ij}/k_i,
 
 Define $W_{ij}^{(u)} = W_{ij}$ for unobserved nodes $i$ and $j$ gives
 \begin{align*}
-\mathbf{y} &= \mathbf{b} + W^{(u)} \mathbf{y} \\
-\mathbf{y} &= \left(I - W^{(u)}\right)^{-1} \mathbf{b}
+\boldsymbol{y} &= \boldsymbol{b} + W^{(u)} \boldsymbol{y} \\
+\boldsymbol{y} &= \left(I - W^{(u)}\right)^{-1} \boldsymbol{b}
 \end{align*}
 
 \subsection{Graph Fourier Transform}
@@ -123,18 +126,18 @@ $$
 
 On a graph, $h = 1$ and $f(x) - f(x + h)$ corresponds to $y_i - y_j$, yielding:
 $$
-(\mathcal{L} \mathbf{y})_i = \sum_j A_{ij} (y_i - y_j) = k_i y_i - \sum_j A_{ij} y_j
+(\mathcal{L} \boldsymbol{y})_i = \sum_j A_{ij} (y_i - y_j) = k_i y_i - \sum_j A_{ij} y_j
 $$
 The Laplacian matrix is $\mathcal{L} = D - A$, where $D$ is the diagonal degree matrix with $D_{ii} = k_i$ and $D_{ij} = 0$ for $i \neq j$.
-The corresponding eigenvalue equation is $\mathcal{L} \mathbf{v} = \lambda \mathbf{v}$.
+The corresponding eigenvalue equation is $\mathcal{L} \boldsymbol{v} = \lambda \boldsymbol{v}$.
 
 The signals can be written as a series in the eigenvectors of $\mathcal{L}$:
-$$\mathbf{y} = \sum_{\alpha=0}^{n-1} c_\alpha \mathbf{v}_\alpha \text{ with } c_\alpha = \mathbf{v}_\alpha^\top \mathbf{y}$$
+$$\boldsymbol{y} = \sum_{\alpha=0}^{n-1} c_\alpha \boldsymbol{v}_\alpha \text{ with } c_\alpha = \boldsymbol{v}_\alpha^\top \boldsymbol{y}$$
 
-Facts:
+\textit{Facts:}
 \begin{enumerate}
     \item The Laplacian matrix $\mathcal{L}$ is positive semi-definite, i.e. $\lambda_i \geq 0$ for all $i$.
-    \item The constant vector $\mathbf{v}_0 = (1, 1, \ldots, 1)^\top$ is an eigenvector of $\mathcal{L}$ with eigenvalue $\lambda_0 = 0$.
+    \item The constant vector $\boldsymbol{v}_0 = (1, 1, \ldots, 1)^\top$ is an eigenvector of $\mathcal{L}$ with eigenvalue $\lambda_0 = 0$.
     \item The eigenvalue $\lambda_1 = 0$ if and only if the graph is not connected.
 \end{enumerate}
 
@@ -143,12 +146,12 @@ Facts:
 
 \textbf{Spanning tree:} a subset of edges that forms a tree on its nodes.
 
-\textbf{Deletion contraction relation:} the number of spanning trees in a graph $G$ is equal to the number of spanning trees in $G$ with an edge $e$ deleted ($G \backslash e$) plus the number of spanning trees in $G$ with the same edge $e$ contracted ($G / e$).
+\textbf{Deletion-contraction relation:} the number of spanning trees in a graph $G$ is equal to the number of spanning trees in $G$ with an edge $e$ deleted ($G \backslash e$) plus the number of spanning trees in $G$ with the same edge $e$ contracted ($G / e$).
 $$
 t(G) = t(G \backslash e) + t(G / e)
 $$
 
-Facts:
+\textit{Facts:}
 \begin{enumerate}
     \item The number of spanning trees for a graph with Laplacian $\mathcal{L}$ is equal to $|\mathcal{L}^{(i,i)}|$ (determinant of the matrix obtained by removing the $i$-th row and column of $\mathcal{L}$), for any $i$.
     \item The number of spanning trees of a graph is $\frac{1}{n} \prod_{i=1}^{n-1} \lambda_i$.
@@ -169,20 +172,20 @@ $$
 Relationship between different Laplacians:
 \begin{align*}
 \mathcal{L} &= D - A \\
-\mathcal{L}^{\text{(rw)}} &= D^{-1} \mathcal{L} \\
-\mathcal{L}^{\text{(sn)}} &= D^{-\frac{1}{2}} \mathcal{L} D^{-\frac{1}{2}}
+\mathcal{L}^{\text{(rw)}} &= D^{-1} \mathcal{L} \text{ (average the differences)} \\
+\mathcal{L}^{\text{(sn)}} &= D^{-\frac{1}{2}} \mathcal{L} D^{-\frac{1}{2}} \text{ (symmetric)}
 \end{align*}
 
 \subsection{Clustering}
-Find an $\mathbf{x}$ that minimises
-$$\sum_{i,j} A_{ij} (x_i - x_j)^2 = \mathbf{x}^\top \mathcal{L} \mathbf{x}$$
+Find an $\boldsymbol{x}$ that minimises
+$$\sum_{i,j} A_{ij} (x_i - x_j)^2 = \boldsymbol{x}^\top \mathcal{L} \boldsymbol{x}$$
 and assign group 1 if $x_i \geq 0$ and group 2 if $x_i < 0$, subject to constraints:
 \begin{enumerate}
     \item $\sum_i x_i = 0$ -- to avoid nodes to be in one group.
     \item $\sum_i x_i^2 = 1$ -- to ensure variation.
 \end{enumerate}
 
-This yields $\mathbf{x}^\top \mathcal{L} \mathbf{x} = \sum_{j=1}^{n-1} c_j^2 \lambda_j$, which is minimised when $\mathbf{x} = \mathbf{v}_1$, the second eigenvector of $\mathcal{L}$.
+This yields $\boldsymbol{x}^\top \mathcal{L} \boldsymbol{x} = \sum_{j=1}^{n-1} c_j^2 \lambda_j$, which is minimised when $\boldsymbol{x} = \boldsymbol{v}_1$, the second eigenvector of $\mathcal{L}$.
 
 \section{Random Graph Models}
 \textbf{The random graph $G(n,p)$:} a graph with $n$ nodes where each pair of nodes is connected with probability $p$. The adjacency matrix follows $A_{ij} \sim \text{Bernoulli}(p)$.
@@ -197,9 +200,9 @@ Given an adjacency matrix, the maximum likelihood estimate of $p$ is $\hat{p} = 
 
 \textbf{Poisson random graph:} a random graph with $p = \frac{\lambda}{n}$. With $n \to \infty$, the degree distribution converges to a Poisson distribution $p_k = \frac{\lambda^k e^{-\lambda}}{k!}$.
 
-\textbf{Giant component:} as $n \to \infty$, the size of the largest component would go to infinity -- the giant component.
+\textbf{Giant component:} If $p$ were close to $1$, as $n \to \infty$, the size of the largest component would go to infinity -- the giant component.
 
-Facts:
+\textit{Facts:}
 \begin{enumerate}
     \item There is at most one giant component in a random graph.
     \item For $p > 1/n$, there exists a giant component.
@@ -211,7 +214,7 @@ $$
 $$
 The probability for a randomly chosen node to have a triangle is 0.
 
-\textbf{Squares:} In a Poisson random graph, the total number of cycles of length 4 (squares) is
+\textbf{Squares:} In a Poisson random graph, the total number of cycles of length 4 is
 $$
 \mathbb{E}[\text{\#4-cycles}] = 3\binom{n}{4} p^4 (1-p)^2 \rightarrow \frac{\lambda^4}{8} \text{ as } n \to \infty
 $$
@@ -227,10 +230,12 @@ $$
 
 Implication: as $n \to \infty$, a randomly chosen node is unlikely to be part of any cycles, hence the random graph is locally tree-like.
 
-\textbf{The small components:} any node not in the unique gian component must be in a small component. The small components are distributed as 
+\textbf{The small components:} any node not in the unique giant component must be in a small component. The small components are distributed as 
 $$
-\pi{s} = \frac{(s\lambda)^{s-1} e^{-s\lambda}}{s!}
+\pi (s) = \frac{(s\lambda)^{s-1} e^{-s\lambda}}{s!}
 $$
+
+When $\lambda < 1$, all components are small with high probability. When $\lambda > 1$, there exists a giant component. When $\lambda = 1$, $\pi(s) \approx \frac{1}{\sqrt{2\pi}}s^{-3/2}$ and $\mathbb{E}[s] = \infty$.
 
 \textbf{Unrealistic properties of the random graph:}
 \begin{enumerate}
@@ -248,16 +253,21 @@ To sample from a Watts-Strogatz model:
 
 Eventually, every node will have at least $k/2$ edges. The number of extra edges is approximately Poisson distributed with mean $k/2$. The large components fo these networks have low diameter.
 
-Fact: For any fixed $p > 0$, the Watts-Strogatz model generates the small-world property, i.e. the distance between nodes is $\mathcal{O}(\log n)$.
+\textit{Fact:} For any fixed $p > 0$, the Watts-Strogatz model generates the small-world property, i.e. the distance between nodes is $\mathcal{O}(\log n)$.
 
 \subsection{Preferential Attachment Model (Barabási-Albert Model)}
 In a preferential attachment model, nodes are added to the network one at a time. As a new node arrives, it preferentially attaches to $c$ nodes with a large number of existing edges, i.e. proportional to the degree.
 
 Given $n$ nodes in the network, the $(n+1)$th node selects node $i$ to connect to with probability $$\frac{k_i}{\sum_j k_j} = \frac{k_i}{2cn}$$
 
-Fact: The preferential model has a power-law degree distribution $p_k \sim k^{-3}$.
+\textit{Fact:} The preferential model has a power-law degree distribution $p_k \sim k^{-3}$.
 
-Note: The distribution is heavy-tailed. Mean degree $\sum_k k p_k = 2c$, the variance of degree is $\sum_k (k - 2c)^2 p_k = \infty$ as $n \to \infty$.
+Note:
+\begin{itemize}
+    \item The distribution is heavy-tailed
+    \item Mean degree $\sum_k k p_k = 2c$
+    \item the variance of degree distribution is $\sum_k (k - 2c)^2 p_k = \infty$ as $n \to \infty$
+\end{itemize}
 
 \subsection{Graphs with Arbitrary Degree Distribution}
 \textbf{Configuration model:} For each node $i$, assign it a degree $k_i$ drawn from the degree distribution $p_k$. Create $k_i$ stubs (half-edges) and connect stubs at random to form edges. The resultant graph is a multigraph with exactly the degree sequence $\{k_i\}$.
@@ -275,7 +285,7 @@ Define $u$ = probability a random not is not in the giant component, and $w$ = p
     w &= \sum_k q_k w^k = g_q(w) = \frac{g'_p(w)}{g'_p(1)}
 \end{align*}
 
-Fact: A random network with degree distribution $p_k$ will have a giant component if $\mathbb{E}[k^2] > 2\mathbb{E}[k]$.
+\textit{Fact:} A random network with degree distribution $p_k$ will have a giant component if $\mathbb{E}[k^2] > 2\mathbb{E}[k]$.
 
 \subsection{Graphs with Community Structure}
 \textbf{Stochastic block model:} a model that accounts for varying densities within and between groups. Each node $i$ is placed in one of $K$ groups at random, i.e. $g_i \in \{1, \dots, K\}$. 
@@ -291,7 +301,7 @@ Goal: find statistically related nodes in a network.
 \subsection{Clustering}
 To recover the communities $\boldsymbol{g}$ given a network $A$, apply Bayes' law:
 $$
-P(\boldsymbol{g} | A, \omega) = \frac{P(A | \boldsymbol{g}, \omega) P(\boldsymbol{g})}{P(A | \omega)} = \frac{1}{Z}\prod_{i < j} \omega_{g_i g_j}^{A_{ij}} (1 - \omega_{g_i g_j})^{1 - A_{ij}} P(\boldsymbol{g})
+P(\boldsymbol{g} | A, \omega) = \frac{P(A | \boldsymbol{g}, \omega) P(\boldsymbol{g})}{P(A | \omega)} = \frac{1}{Z}\prod_{i < j} \omega_{g_i g_j}^{A_{ij}} (1 - \omega_{g_i g_j})^{1 - A_{ij}}
 $$
 
 Compute the posterior probability $Q_{ir}$ that node $i$ is in group $r$ using naive Bayes:
@@ -305,7 +315,6 @@ Assuming (1) removing a single node $i$ would not change the posterior for the r
     Q_{ir} &\propto \sum_{\boldsymbol{g}\backslash_i} \prod_j Q_{jg_j} \omega_{r g_j}^{A_{ij}} (1 - \omega_{r g_j})^{1 - A_{ij}} \\
     &= \prod_j \sum_s \omega_{r s}^{A_{ij}} (1 - \omega_{r s})^{1 - A_{ij}} Q_{js}
 \end{align*}
-
 Given $Q_{ir}$, the minimum error is achieved by setting $\hat{g}_i = \arg\max_r Q_{ir}$.
 
 \subsection{Parameter Estimation}
@@ -324,25 +333,5 @@ Use EM algorithm to iteratively update $Q_{ir}$ and $\omega$ until convergence:
     \item E-step: update $Q_{ir}$ using the current $\omega$.
     \item M-step: update $\omega$ using the current $Q_{ir}$.
 \end{enumerate}
-
-\section*{Notations}
-\renewcommand{\arraystretch}{1.2}
-\begin{center}
-\begin{tabular}{|c|l|}
-\hline
-\textbf{Symbol} & \textbf{Definition} \\ \hline
-$G$ & A network – $G$ for graph. \\ \hline
-$n$ & Number of nodes in a network. \\ \hline
-$m$ & Number of edges in a network. \\ \hline
-$k$ & Mean degree, equal to $2m/n$. \\ \hline
-$k_i$ & Degree of node $i$. \\ \hline
-$A$ & Adjacency matrix. \\ \hline
-$\mathcal{L}$ & Laplacian matrix. \\ \hline
-$p_k$ & Degree distribution. \\ \hline
-$q_k$ & Excess degree distribution, $q_k \propto (k + 1)p_{k+1}$. \\ \hline
-$G(n,p)$ & The random graph. \\ \hline
-$N_i$ & The set of neighbors of node $i$. \\ \hline
-\end{tabular}
-\end{center}
 
 \end{document}

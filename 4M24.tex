@@ -36,7 +36,7 @@ where $\sigma_f^2$ is the variance of $f(x)$.
 $$
 \tilde{f}(x) = \frac{f(x) - \mathbb{E}[f(x)]}{\sigma_f}
 $$
-Define $S_N = \frac{1}{N} \sum_{n=1}^N \tilde{f}(x_n)$ and $Z_N = \frac{S_N}{\sqrt{N}}$.
+Define $S_N = \sum_{n=1}^N \tilde{f}(x_n)$ and $Z_N = \frac{S_N}{\sqrt{N}}$.
 The moment generating function of $Z_N$ is 
 \begin{align*}
 M_{Z_N}(t) &= \mathbb{E}[\exp(t Z_N)] = \mathbb{E}\left[ \exp\left(t \frac{S_N}{\sqrt{N}}\right)\right] \\
@@ -57,7 +57,7 @@ $$
 M_{Z_N}(t) = \left( 1 + \frac{t^2}{2N} + O(N^{-2}) \right)^N \to \exp\left(\frac{t^2}{2}\right) \text{ as } N \to \infty
 $$
 
-which is the MGF of the standard normal. Hence $Z_N \to \mathcal{N}(0, 1)$, $S_N \to \mathcal{N}(0, \frac{1}{N})$, $\frac{1}{N} \sum_{n=1}^N f(x_n) \to \mathcal{N}(\mathbb{E}[f(x)], \frac{\sigma_f^2}{N})$.
+which is the MGF of the standard normal. Hence $Z_N \to \mathcal{N}(0, 1)$, $S_N \to \mathcal{N}(0, N)$, $\frac{1}{N} \sum_{n=1}^N f(x_n) \to \mathcal{N}(\mathbb{E}[f(x)], \frac{\sigma_f^2}{N})$.
 
 \textbf{Importance sampling:} use another probability density $q(x)$ that satisfy $q(x) \neq 0$ when $f(x) \neq 0$ to sample $x$. The expectation can be rewritten as
 \begin{align*}
