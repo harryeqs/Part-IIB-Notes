@@ -13,8 +13,7 @@
 \preauthor{\begin{center}\large\vspace{0.5em}}
 \postauthor{\end{center}\vspace{-0.5em}}
 
-\title{
-    {\scshape  Part IIB Revision Notes} \\ 
+\title{{\scshape  Part IIB Revision Notes} \\ 
     \vspace{0.5em}
     \textbf{4F12: Computer Vision}}
 \author{Qianshuo (Harry) Ye}
@@ -30,9 +29,19 @@
     \item \textit{Featureless region:} smooth variation of intensities.
     \item \textit{Edge:} intensity discontinuity in one direction.
     \item \textit{Corner:} intensity discontinuity in two directions.
+    \item \textit{Blob:} circular region of uniform intensity.
 \end{itemize}
 
-\textbf{1D edge detection:} The general procedure is:
+Central motivation for feature extraction: to reduce the amount of data to be processed.
+
+Desirable properties of features:
+\begin{itemize}
+    \item Preserve the useful information in an image.
+    \item Discard redundant information.
+    \item Should be as generic as possible.
+\end{itemize}
+
+\textbf{1D edge detection:} The general procedure is
 \begin{enumerate}
     \item Convolve the signal $I(x)$ with a Gaussian kernel $g_\sigma(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{x^2}{2\sigma^2}\right)$.
     \item Compute the derivative $s'(x) = \frac{d}{dx} [I(x) * g_\sigma(x)]$.
@@ -45,6 +54,12 @@ s''(x) = g_\sigma''(x) * I(x)
 $$
 The parameter $\sigma$ controls the scale of edge detection: larger $\sigma$ detects coarser edges.
 
+Filtering effects:
+\begin{itemize}
+    \item Convolution with the Gaussian is \textit{low-pass} filtering: $g_\sigma(x) \leftrightarrow g_{\sigma'}(\omega), \sigma' = \frac{1}{\sigma}$.
+    \item Convolution with the Laplacian is \textit{band-pass} filtering: $g_\sigma''(x) \leftrightarrow g_{\sigma'}''(\omega) = -\omega^2 g_{\sigma'}(\omega)$.
+\end{itemize}
+
 \textbf{2D edge detection:} The general procedure is similar to the 1D case, but the image is smoothed with a 2D Gaussian kernel
 $$
 G_\sigma(x, y) = \frac{1}{2\pi\sigma^2} \exp\left(-\frac{x^2 + y^2}{2\sigma^2}\right)
@@ -54,17 +69,32 @@ The edgels are thresholded -- only those with $|\nabla S|$ above a certain value
 
 \textit{Marr-Hildreth operator}: Find the zero crossings of $\nabla^2 G_\sigma * I$, where $\nabla^2 G_\sigma$ is the Laplacian of the $G_\sigma$.
 
-In practice, the convolution are performed as truncated summations (typically the discarded samples are $< 1/1000$ of the peak value)
+In practice, the convolution are performed as truncated summations (typically the discarded samples are $< 1/1000$ of the peak value, yielding a kernel of size $N = 2n+1$ where $n > 3.7 \sigma - 1$):
 $$
-S(x,y) = \sum_{u=-n}^{n} \sum_{v=-n}^{n} G_\sigma(u,v) I(x-u, y-v)
+S(x,y) = G_\sigma(x,y) * I(x,y) = \sum_{u=-n}^{n} \sum_{v=-n}^{n} G_\sigma(u,v) I(x-u, y-v)
 $$
 The 2D convolution can be decomposed into two 1D convolutions
 $$
-S(x,y) = g_\sigma(x) * [g_\sigma(y) * I(x,y)]
+S(x,y) = g_\sigma(x) * [g_\sigma(y) * I(x,y)] = \sum_{u = -n}^{n} \sum_{v = -n}^{n} g_\sigma(u) g_\sigma(v) I(x-u, y-v)
 $$
 The computational saving is $\frac{(2n+1)^2}{2(2n+1)} = \frac{2n+1}{2}$.
 
-Differentiation is also implemetned through a discrete concolution with the kenerl $[1/2, 0, -1/2]$, using the approximation $\frac{\partial S}{\partial x} \approx \frac{S(x+1,y) - S(x-1,y)}{2}$.
+Implementations:
+\begin{itemize}
+    \item Differentiation $\frac{\partial S}{\partial x}$: discrete convolution with the kernel $[1/2, 0, -1/2]$, using the approximation $\frac{\partial S}{\partial x} \approx \frac{S(x+1,y) - S(x-1,y)}{2}$.
+    \item 1D Laplacian $\nabla^2S(x)$: discrete convolution with the kernel $[1, -2, 1]$, using the approximation $\nabla^2 S = \frac{\partial^2}{\partial x^2} I(x) \approx S(x+1) + S(x-1) - 2S(x)$.
+    \item 2D Laplacian $\nabla^2S(x,y)$: discrete convolution with the kernel $\begin{bmatrix}
+        0 & 1 & 0 \\
+        1 & -4 & 1 \\
+        0 & 1 & 0
+    \end{bmatrix}$, using the approximation $\nabla^2 S = (\frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2})I(x,y) \approx S(x+1,y) + S(x-1,y) + S(x,y+1) + S(x,y-1) - 4S(x,y)$.
+\end{itemize}
+
+Limitations of edges as keypoints:
+\begin{itemize}
+    \item Edges only allow localisation in one dimension.
+    \item Edges cannot be used to determine the scale of a feature.
+\end{itemize}
 
 \textbf{Corner detection:} One way is to compute the normalised cross-correlation between an image patch $P$ and other portions of the image $I$:
 $$
@@ -76,7 +106,7 @@ A more efficient method is to use the intensity difference:
 \begin{enumerate}
     \item Calculate change in intensity in direction $\mathbf{n}$:
     \begin{align*}
-        S_n &= \nabla S(x,y) \cdot \hat{\mathbf{n}} = [S_x \quad S_y]^\top \cdot \hat{\mathbf{n}} \\
+        S_n &= \nabla S(x,y) \cdot \hat{\mathbf{n}} = [S_x \quad S_y]^\top \cdot \hat{\mathbf{n}} \approx S(\mathbf{x}+\hat{\mathbf{n}}) - S(\mathbf{x})\\
         S_n^2 &= \frac{\mathbf{n}^\top \begin{bmatrix}
             S_x^2 & S_x S_y \\
             S_x S_y & S_y^2
@@ -91,34 +121,56 @@ A more efficient method is to use the intensity difference:
     $$
     where $\langle \cdot \rangle$ denotes the smoothed value.
     \item According to eigenvector theory, $\lambda_1 \leq C_n(x,y) \leq \lambda_2$. $\lambda_1$ and $\lambda_2$ are eigenvalues of $A$. $\lambda_2$ is the maximum smoothed change in intensity and $\lambda_1$ is the minimum.
-    A corner is detected if $\lambda_1$ and $\lambda_2$ are both large and distinct.
+    A corner is detected if $\lambda_1$ and $\lambda_2$ are \textit{both large and distinct}.
 \end{enumerate}
 
-The Harris corner detector computes the determinant $\text{det}(A) = \lambda_1 \lambda_2$ and the trace $\text{tr}(A) = \lambda_1 + \lambda_2$ to avoid actual computing eigenvalues. 
+The \textit{Harris-Stephens corner detector} computes the 
+\begin{itemize}
+    \item determinant $\text{det}(A) = \lambda_1 \lambda_2$ 
+    \item and the trace $\text{Tr}(A) = \lambda_1 + \lambda_2$
+\end{itemize}
 A corner is detected when $\lambda_1 \lambda_2 - \kappa (\lambda_1 + \lambda_2)^2$ is greater than some threshold.
 
-\textbf{Blob detection:} A \textit{blob} is an area of uniform intensity. Convolution with the Laplacian of Gaussian (LoG) kernel produce a strong response with an extrama at the center of a blob when the scale of the kernel $\sigma$ matches the size of the blob. The radius of the matched blob is $\sqrt{2} \sigma$ (where zero-crossing occurs).
+\textbf{Blob detection:}
+\begin{itemize}
+    \item Convolution with the Laplacian of Gaussian (LoG) kernel produce a strong response with an extrema at the center of a blob when the scale of the kernel $\sigma$ matches the size of the blob. 
+    \item The radius of the matched blob is $\sqrt{2} \sigma$ (where zero-crossing occurs).
+\end{itemize}
 
-\textbf{Image pyramids:} A sequence of images smootheed with Gaussians of different scales. The scale satisfies $\sigma_{i+1} = 2^{1/s} \sigma_i$ so it doubles ever $s$ levels. After $s$ levels, double the scale by subsampling the image.
+\textbf{Image pyramids:} A sequence of images smootheed with Gaussians of different scales. The scale satisfies $\sigma_{i} = 2^{i/s} \sigma_0$ so it doubles every $s$ levels. 
 
-The image is smoothed incrementally by convolution $G(\sigma_{i+1}) = G(\sigma_i) * G(\sigma_{k_i})$, where $\sigma_{k_i} = \sqrt{\sigma_{i+1}^2 - \sigma_i^2} = \sigma_i \sqrt{2^{2/s} - 1}$ (only need to be computed once).
+To construct an image pyramid:
+\begin{itemize}
+    \item The image is smoothed incrementally by convolution $G(\sigma_{i+1}) = G(\sigma_i) * G(\sigma_{k_i})$.
+    \item The scale for the incremental blur is $\sigma_{k_i} = \sqrt{\sigma_{i+1}^2 - \sigma_i^2} = \sigma_i \sqrt{2^{2/s} - 1}$ (only need to be computed once). A total of $s$ incremental blurs are needed in an octave.
+    \item After $s$ levels, $\sigma_s = 2 \sigma_0$, subsample the image to 1/4 of the original size by skipping every other row and column.
+    \item Repeat the process to construct the next octave of the pyramid, reusing the incremental blurs $\sigma_{k_i}$.
+\end{itemize}
 
 \textbf{Difference of Gaussian (DoG):} A blob detector that approximates the LoG:
-$$
-G(x,y, k\sigma) - G(x,y,\sigma) \approx (k-1) \sigma^2 \nabla^2 G(x,y,\sigma)
-$$
-
-\textbf{Keypoint detection:} Blob centeres are found by subtracting neighbouring images of same dimension in the image pyramid and search for local extrema (by comparing with 26 neighbouring pixels in the current, upper and lower levels).
-Normalise for scale of the keypoint by sampling neighbouring pixels in the appropriate image of the Image pyramid.
-
-\textbf{Keypoint orientation:} Build a histogram (36 bins covering 360 degrees) of edge orientations weighted by their gradient magnitudes in a $16 \times 16$ neighbourhood. The gradients needs to be smoothed by a 2D Gaussian of size $1.5 \times$ the blob scale. The highest peak in the histogram is the dominant orientation.
-Normalise for orientation by sampling neighbouring pixels after computing a dominant orientation.
+\begin{align*}
+G(x,y, k\sigma) - G(x,y,\sigma) &\approx (k-1) \sigma^2 \nabla^2 G(x,y,\sigma) \\
+G(x,y, \sigma_{i+1}) - G(x,y, \sigma_i) &\approx (2^{1/s}-1) \sigma_i^2 \nabla^2 G(x,y,\sigma_i)
+\end{align*}
+\textbf{Keypoint detection:} 
+\begin{itemize}
+    \item Blob centeres are found by subtracting neighbouring images of in the image pyramid and search for local extrema.
+    \item The local extrema is located by comparing with 26 neighbouring pixels in the current, upper and lower levels.
+    \item Normalise for scale of the keypoint by sampling neighbouring pixels in the appropriate image of the image pyramid.
+\end{itemize}
+\textbf{Keypoint orientation:} 
+\begin{itemize}
+    \item Build a histogram (36 bins covering 360 degrees) of edge orientations weighted by their gradient magnitudes in a $16 \times 16$ neighbourhood.
+    \item The gradients needs to be smoothed by a 2D Gaussian of size $1.5 \sigma$.
+    \item The highest peak in the histogram is the dominant orientation.
+    \item Normalise for orientation by sampling neighbouring pixels after computing a dominant orientation.
+\end{itemize}
 
 \begin{center}
     \includegraphics[width=0.8\textwidth]{figures/4F12/keypoint_detection.png}
 \end{center}
 
-\textbf{Matching patches:} Patches of intensities can be matched by the cross-correlation:
+\textbf{Normalised intensities descriptor:} Patches of intensities can be matched by the cross-correlation:
 $$
 CC(P_1, P_2) = \sum_i^N P_1[i] P_2[i]
 $$
@@ -128,20 +180,39 @@ The patch can be normalised to make the matching invariant to changes in brightn
     \sigma^2 &= \frac{1}{N} \sum_{x,y} Z(x,y)^2, \quad P(x,y) = \frac{Z(x,y)}{\sigma}
 \end{align*}
 
-\textbf{Scale-Invariant Feature Transform (SIFT):}
+\textbf{Scale-Invariant Feature Transform (SIFT) descriptor:} encodes 2D shapes by looking at gradients in a local neighbourhood, invariant to: position, scale, orientation and lighting.
+
+Implementation:
 \begin{enumerate}
-    \item Split $N \times N$ ppatch into $c$ cells, calculate gradient at every pixel
+    \item Split $N \times N$ patch into $c$ cells, calculate gradient at every pixel
     \item For each cell, build a histogram of gradient directions ($d$ directions) weighted by their magnitude and a Gaussian window with a $\sigma$ of $0.5$ times the feature scale (to avoid occlusion).
-    \item Normalise the descriptor to make it invariant to changes in gradient magnitude.
-    \item Threshold the maximum value of the descriptor to 0.2 to reduce the effect of storng lights, then renormalise.
+    \item Normalise the descriptor to make it invariant to changes in gradient magnitude (lighting).
+    \item Threshold the maximum value of the descriptor to 0.2 to reduce the effect of strong lights, then renormalise.
 \end{enumerate}
 Typically, $N=16$, $c=16$ and $d=8$, so the SIFT descriptor is a 128-dimensional vector.
 
+Limitations: The SIFT descriptor perform poorly at occluded object boundaries and large changes in viewpoint.
+
+Invariances of SIFT:
+\begin{itemize}
+    \item \textit{Translation invariance:} the descriptor is computed at the location of a keypoint.
+    \item \textit{Scale invariance:} the desciptor is computed from 16 $\times$ 16 pixels at the characteristic scale of a keypoint.
+    \item \textit{Rotation invariance:} gradient orientations are stored relative to the dominnant orientation.
+    \item \textit{Partial occlusion invariance:} the gradients are weighted by a Gaussian to reduce influence of gradients far from the centre.
+    \item \textit{Local positional invariance:} historgrams are computed over cells of 4 $\times$ 4 pixels, so gradients can shift up to 4 pixels while still contributing to the same histogram.
+    \item \textit{Local rotational invariance:} gradient orientations are aggregated in histograms with relativelt coarse bins.
+    \item \textit{Affine illumination invariance:} the SIFT descriptor is normalised to unit length.
+    \item \textit{Non-linear illumination invariance:} the values in the descriptor are thresholded.
+\end{itemize}
+
 A match can be measured by the Euclidean distance between two SIFT descriptors (linear search):
 $$
-E(\vec{x}, \vec{y}) = \sqrt{\sum_d (x_d - y_d)^2}
+E(\boldsymbol{x}, \boldsymbol{y}) = \sqrt{\sum_d (x_d - y_d)^2}
 $$
-An alternative is to use a k-d tree to speed up the search.
+The \textit{nearest neighbour search} can be performed viaa k-d tree. Accept a match if the distance to the nearest neighbour is less than 0.7 times the distance to the second nearest neighbour (ratio test):
+$$
+\frac{E(\boldsymbol{x}_m, \boldsymbol{x}_1)}{E(\boldsymbol{x}_m, \boldsymbol{x}_2)} < 0.7
+$$
 
 \textbf{Texture:} Orderly and repetitive patterns of regular sub-elements called \textit{textons}. Textures can be described by their response to a collection of filters.
 
@@ -159,6 +230,8 @@ $$
 \end{bmatrix}
 $$
 where $f$ is the focal length and $Z_c$ is along the optical axis.
+
+Assumptions: pin-hole camera, central planar projection, no non-linear distortion.
 
 \begin{center}
     \includegraphics[width=0.4\textwidth]{figures/4F12/orthographic.png}
@@ -229,7 +302,7 @@ $$
 
 \textbf{Camera projection matrix}: The full camera model can be expressed as
 \begin{align*}
-\tilde{w} &= \mathrm{P}_{ps} \tilde{\mathbf{X}} = \mathrm{P}_c \mathrm{P}_p \mathrm{P}_r \tilde{\mathbf{X}} \\
+\mathbf{\tilde{w}} &= \mathrm{P}_{ps} \tilde{\mathbf{X}} = \mathrm{P}_c \mathrm{P}_p \mathrm{P}_r \tilde{\mathbf{X}} \\
 \text{where } \mathrm{P}_r &= \begin{bmatrix}
     \mathrm{R} & \mathbf{T} \\
     \mathbf{0}^\top & 1
@@ -246,6 +319,7 @@ $$
     0 & 0 & 1
 \end{bmatrix}
 \end{align*}
+$\mathrm{P}_c \mathrm{P}_p$ accounts for the \textit{intrinsic} camera parameters, while $\mathrm{P}_r$ accounts for the \textit{extrinsic} parameters.
 
 The projection matrix can be decomposed into a \textit{camera calibration matrix} $\mathbf{K}$ and a rigid body motion $[R|\mathbf{T}]$: $\mathrm{P}_{ps} = \mathbf{K} [R|\mathbf{T}]$, where
 $$\mathbf{K} = \begin{bmatrix}
@@ -264,11 +338,34 @@ The degree of freedom of the matrices are $n - 1$ as the scale factor is arbitra
 
 \textbf{Planar transformation:} Mapping between two planes.
 
+Affine planar transformation is suitable when all points on the plane lie at approximately the same depth from the camera compared to the viewing distance. 
+
+For affine planar transformation, there are 6 DoF: rotations (1), scaling (1), shear (2), translation (2).
+General planar transformation have 2 extra DoFs that specify fanning.
+
 \begin{center}
     \includegraphics[width=0.6\textwidth]{figures/4F12/planar_transformation.png}
 \end{center}
 
-\textbf{Camera calibration:} The process of determining the projection matrix $\mathrm{P}$. Each point $(u_i, v_i)$ gives 2 equations, so at least 6 points are needed to calibrate the camera.
+A circle in the world can be described by the equation:
+$$
+\mathbf{\tilde{X}}^\top \mathrm{C} \tilde{\mathbf{X}} = 0
+$$
+Under perspective projection $\mathbf{\tilde{w}} = \mathrm{H} \mathbf{\tilde{X}}$, the circle is projected to an ellipse described by
+$$
+\mathbf{\tilde{w}}^\top \mathrm{C}' \mathbf{\tilde{w}} = 0 \quad \text{where} \quad \mathrm{C}' = \mathrm{H}^{-\top} \mathrm{C} \mathrm{H}^{-1}
+$$
+
+\textbf{Camera calibration:} The process of determining the projection matrix $\mathrm{P}$. 
+
+Desirable properties of the 3D objects for calibration inlcude:
+\begin{itemize}
+    \item Span large field of view.
+    \item Easy to localise accurately and match.
+    \item Must not be coplanar or collinear.
+\end{itemize}
+
+Each point $(u_i, v_i)$ gives 2 equations, so at least 6 points are needed to calibrate the camera.
 
 The equations can be solve by linear least squares:
 \begin{itemize}
@@ -283,7 +380,7 @@ The solution can be refined by non-linear minimisation of errors (between measur
 $$
 \min_{\mathrm{P}} \sum_i ((u_i - \hat{u}_i)^2 + (v_i - \hat{v}_i)^2)
 $$
-Once $\mathrm{P}$ is known, decompose the $3\times 3$ submatrix into $\mathbf{K}$ and $\mathrm{R}$ using RQ decomposition, and $\mathbf{T}$ can be found by $\mathbf{T} = \mathbf{K}^{-1} \begin{bmatrix}
+Once $\mathrm{P}$ is known, decompose the $3\times 3$ submatrix into $\mathbf{K}$ and $\mathrm{R}$ using QR decomposition, and $\mathbf{T}$ can be found by $\mathbf{T} = \mathbf{K}^{-1} \begin{bmatrix}
     p_{14} & p_{24} & p_{34}
 \end{bmatrix}^\top$.
 
@@ -293,9 +390,9 @@ To calibrate the camera for viewing a plane, at least 4 points are needed; for v
 
 \textbf{Image mosaicing:} Any two images of a general scene with the same camera centre (rotation only) are related by
 $$
-\tilde{\mathbf{w}}' = \mathbf{K} \mathrm{R} \mathbf{K}^{-1} \tilde{\mathbf{w}}
+\mathbf{\tilde{w}}' = \mathbf{K} \mathrm{R} \mathbf{K}^{-1} \mathbf{\tilde{w}}
 $$
-A minimum of 4 image correspondences can be used to estimate the homography and stitch images together.
+Tha camera is rotated around the optical centre an a sequence of image is aquired, with each image overlapping its predecessor to some extend. A minimum of 4 correspondences can be used to estimate the homography $\mathrm{H} = \mathbf{K} \mathrm{R} \mathbf{K}^{-1}$ between images and dispaly them in the same plane.
 
 With many data ouliers, the homography can be estimated by RANSAC (RANdom SAmple Consensus):
 \begin{enumerate}
@@ -303,10 +400,10 @@ With many data ouliers, the homography can be estimated by RANSAC (RANdom SAmple
     \item Select minimal subset of matches (4 for homography)
     \item Compute the homography $\mathrm{H}$ from the subset
     \item Compute projected position and count the number of inliers (distance < threshold)
-    \item Repeat steps 2-4 tp maximise the number of inliers
+    \item Repeat steps 2-4 to maximise the number of inliers
 \end{enumerate}
 
-\textbf{Weak perspective projection:} When the depth of objects in the scene is small compared to their distance from the camera, the projection can be approximated as a parallel projection, with a weak perspective projection matrix
+\textbf{Weak perspective projection:} When the range of depths of objects in the scene is small compared to their distance from the camera, the projection can be approximated as a parallel projection, with a weak perspective projection matrix
 $$\mathrm{P}_{pll} = \begin{bmatrix}
     f & 0 & 0 & 0 \\
     0 & f & 0 & 0 \\
@@ -322,6 +419,12 @@ $$
 \end{bmatrix}
 $$
 The 3D affine camera can be calibrated by at least 4 points, a 2D one can be calibrated by at least 3 points, and a 1D one can be calibrated by at least 2 points.
+
+Advantages of affine cameras:
+\begin{itemize}
+    \item Can be calibrated by fewer points.
+    \item Calibration process is better conditioned (less sensitive to noise).
+\end{itemize}
 
 \textbf{Cross-ratio:} For 4 collinear points $a$, $b$, $c$ and $d$, the cross-ratio is defined as
 $$
@@ -349,7 +452,11 @@ $$
     \includegraphics[width=0.45\textwidth]{figures/4F12/epipolar_geometry.png}
 \end{center}
 
-\textbf{Epipolar constraint:} Correspondences must lie on the epipolar lines: the image of the ray from the other camera's optical centre to the point $\mathbf{X}$. 
+\textbf{Epipolar constraint:} Correspondences must lie on the epipolar lines.
+\begin{itemize}
+    \item An \textit{epipolar line} is the image of the ray from the other camera's optical centre to the point $\mathbf{X}$. 
+    \item An \textit{epipole} is the image of the other camera's optical centre. All epipolar lines pass through the epipole.
+\end{itemize}
 
 The epipolar constraint can be expressed as 
 $$
@@ -366,6 +473,18 @@ $$
 $$
 The epipoles follow $\mathrm{E} \mathbf{p}_e = \mathbf{0}$ and $\mathrm{E}^\top \mathbf{p}_e' = \mathbf{0}$. Hence, the $\mathrm{E}$ have a non-zero null space and is non-invertible.
 
+Derivation:
+\begin{align*}
+    \mathrm{X_c'} &= \mathrm{R} \mathrm{X_c} + \mathbf{T} \\
+    \mathbf{T} \times \mathrm{X_c'} &= \mathbf{T} \times (\mathrm{R} \mathrm{X_c} + \mathbf{T}) = \mathbf{T} \times \mathrm{R} \mathrm{X_c} \\
+    \mathrm{X_c} \cdot (\mathbf{T} \times \mathrm{X_c'}) &= \mathrm{X_c}^\top (\mathbf{T} \times \mathrm{R} \mathrm{X_c}) = 0 \\
+    \mathrm{X_c'}^\top [\textrm{T}_\times \mathrm{R}] \mathrm{X_c} &= \lambda^2 \mathbf{p}'^\top \mathrm{E} \mathbf{p} = 0
+\end{align*}
+The left epipole in the right camera's coordinates is 
+$$
+\lambda \mathbf{T} = \mathrm{R} \mathbf{p}_e \quad \rightarrow \quad \lambda \mathbf{T} \times \mathbf{T} = \mathbf{T} \times \mathrm{R} \mathbf{p}_e = \mathrm{E} \mathbf{p}_e = \mathbf{0}
+$$
+
 For parallel cameras, the epipolar lines are parallel and the epipoles are at infinity.
 
 \textbf{Fundamental matrix:} Since $\mathbf{p} = \mathbf{K}^{-1}\tilde{\mathbf{w}}$, the fundamental matrix $\mathrm{F}$ can be defined as
@@ -374,28 +493,26 @@ $$
 $$
 The epipolar lines follow $\tilde{\mathbf{l}}' = \mathrm{F} \tilde{\mathbf{w}}$ and $\tilde{\mathbf{l}} = \mathrm{F}^\top \tilde{\mathbf{w}}'$, and the epipoles follow $\mathrm{F} \tilde{\mathbf{w}}_e = \mathbf{0}$ and $\mathrm{F}^\top \tilde{\mathbf{w}}_e' = \mathbf{0}$.
 
+Estimation:
 Since the overall scale is arbitrary and the determinant is zero, the fundamental matrix has 7 degrees of freedom. The fundamental matrix can be estimated by at least 8 correspondences. 
 
-If the correspondences are noisy, the estimate will not have zero determinant -- can be solved by setting the smallest singular value to zero. 
+If the correspondences are noisy, the estimate will not have zero determinant -- can be solved by setting the smallest singular value to zero.
 
 \textbf{Constraints on the correspondences:}
 \begin{enumerate}
+    \item \textit{Epipolar constraint:} Each point feature identified in one image must lie on a corresponding epipolar line in the other image.
     \item \textit{Uniqueness:} For opaque objects, each point in the left image has at most one match in the right image.
     \item \textit{Ordering:} For an opaque object, the points are ordered identically in two images.
-    \item \textit{Figural continuity:} If the distinguished points lie on contours, they can be matched by the continuity of the contours.
+    \item \textit{Figural continuity:} If the distinguished points lie on contours, they can sometimes be matched by the continuity of the contours.
     \item \textit{Disparity gradient:} If surfaces are smooth, the disparities (differences between locations of corresponding points) must be locally smooth.
 \end{enumerate}
 
-\textbf{Finding correspondences:} The outline of an algorithm is:
+\textbf{Finding correspondences:}
 \begin{enumerate}
     \item Unguided matching: Use normalised cross-correalation to obtain a small number of seed matches.
     \item Compute epipolar geometry: Use seed matches and robust regression to estimate the fundamental matrix $\mathrm{F}$.
-    \item Guided matching: Restict the search for matches to a narrow band around epipolar lines.
+    \item Guided matching: Restrict the search for matches to a narrow band around epipolar lines.
 \end{enumerate}
-
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/4F12/stereo.png}
-\end{center}
 
 \textbf{Recovering metric structure:} The singular value decomposition of the essential matrix gives
 $$
@@ -420,8 +537,14 @@ $$
     \mathrm{R} & \mathbf{T}
 \end{bmatrix}
 $$
-The structure can then be recovered with triangulation (by least squares). The reconstruction is up to a scale factor. 
+The projection matrices can be used to provide an initial estimate of the 3D coordinates of the matched points by triangulation. The reconstruction can be iteratively refined by minimising the \textit{reprojection error} through updating the 3D coordinates and the projection matrices -- the \textit{bundle adjustment} process.
+
+The reconstruction is up to a scale factor as the scale of $\mathbf{T}$ is unknown. 
 Ambiguity in $\mathbf{T}$ and $\mathrm{R}$ (4 pairs) can be resolved by checking the reconstructed points are in front of the cameras.
+
+\begin{center}
+    \includegraphics[width=0.7\textwidth]{figures/4F12/stereo.png}
+\end{center}
 
 \textbf{Affine stereo:} When the depth of the scene is small compared to the distance from the camera, the affine camera is appropriate:
 $$
@@ -443,8 +566,9 @@ $$
 \tilde{\mathbf{w}}'^\top \mathrm{F}_A \tilde{\mathbf{w}} = 0
 $$
 
+\newpage
 \section{Deep Learning for Computer Vision}
-Note: Some of the contents are included in 4F10 hence not repeated here.
+\textit{Note: The following notes may not be comprehensive and are intended to provide a high-level overview of the key concepts.}
 
 \textbf{Perceptron:} $y(\mathbf{x}) = f(\mathbf{w}^\top \mathbf{x} + b)$, where $f$ is the activation function (e.g. $\tanh$).
 
