@@ -37,13 +37,14 @@
     \item Increment the PC to point to the next instruction.
     \item \textit{Decode} instruction.
     \item If the instruction uses data from memory, calculate the relevant address and fetch the data.
+    \item Fetch data from memory.
     \item \textit{Execute} the instruction.
     \item Store results.
 \end{enumerate}
 
 \textbf{Memory addressing:}
 \begin{itemize}
-    \item \textit{Byte-addressable:} Each address referes to an 8-bit quantity (a byte).
+    \item \textit{Byte-addressable:} Each address refers to an 8-bit quantity (a byte).
     \item \textit{Word:} A unit of data manipulated by the CPU (the size of the register). (4 bytes for a 32-bit processor)
 \end{itemize}
 $$
@@ -58,7 +59,7 @@ $$
     \item Data is read/written by electromagnetic heads that float above both surfaces of the platters.
     \item Each surface is divided into $\sim$ 280,000 \textit{tracks}.
     \item The collection of tracks under the heads at a given time is called a \textit{cylinder}.
-    \item Each track is divided into $\sim$ 850-2600 \textit{sectors}, which are the smallest unites that can be read/written.
+    \item Each track is divided into $\sim$ 850-2600 \textit{sectors}, which are the smallest units that can be read/written.
     \item The time to read or write a sector of data to or from the disk is
     $$\text{access time} = \text{seek time} + \text{rotational latency} + \text{transfer time} + \text{controller overhead}$$
     \begin{itemize}
@@ -97,8 +98,8 @@ where $f$ is the fraction of execution time affected by the improvement and $s =
 
 \textbf{Classification of ISAs:}
 \begin{itemize}
-    \item \textit{Stack ISA}: Operands are taken from the stack.
-    \item \textit{Accumulator ISA:} One operand is taken from the accumulator.
+    \item \textit{Stack ISA}: Operands are taken from the stack. e.g. \texttt{add} does stack(1) $\leftarrow$ stack(2) + stack(3)
+    \item \textit{Accumulator ISA:} One operand is implicitly taken from the accumulator (a special register). e.g. \texttt{lda 0xE000} does accumulator $\leftarrow$ word at E000.
     \item \textit{General purpose register ISA:} All operands are explicitly declared, either registers or memory. The key parameters are: the \textit{number of operands} per ALU instruction and the \textit{maximum number of memory references} in ALU instructions.
 \end{itemize}
 
@@ -160,10 +161,10 @@ The 26-bit address is a \textit{word} address, so it is effectively a 28-bit byt
 Examples:
 \begin{itemize}
     \item Jump instruction: \texttt{j exit} means jump to address with label \texttt{exit}. The machine language in decimal is [2, 10000].
-    \item Jump and link: \texttt{jal A} means call procedure A and save the return address (PC + 4) in register \$31. If a procedure calls another procedure, the return address must be stored on the stack (fills top-down in MIPS), where the address of the bottom of the stack is in register \$29.
+    \item Jump and link: \texttt{jal A} means call procedure A and save the return address (PC + 4) in register \$31, so it is possible to return after a procedure. If a procedure calls another procedure, the return address must be stored on the stack (fills top-down in MIPS), where the address of the bottom of the stack is in register \$29.
 \end{itemize}
 
-\textbf{Parameter passing:} The first 4 parameters are passed in registers \$4 to \$7, and the rest are passed on the stack. If another procedure is called, or registers are used as scratch space, registers need to be saved and restored, with two conventions:
+\textbf{Parameter passing:} The first 4 parameters are passed in registers \$4 to \$7, and the rest are passed on the stack. If another procedure is called, or registers are used as scratch space, the registers need to be saved and restored, with two conventions:
 \begin{itemize}
     \item \textit{Caller save:} The calling routine saves the register on the stack.
     \item \textit{Callee save:} The called routine saves the register on the stack.
@@ -177,25 +178,31 @@ Examples:
 \end{itemize}
 
 \section{ALU Design}
-\textbf{Full adder:} Simpliefied boolean expression for the Sum and CarryOut:
+\textbf{Full adder:} Simplified boolean expression for the Sum and CarryOut:
 \begin{align*}
     \text{CarryOut} &= \text{a.CarryIn} + \text{b.CarryIn} + \text{a.b} \\
     \text{Sum} &= \text{a}.\overline{\text{b}}.\overline{\text{CarryIn}} + \overline{\text{a}}.\text{b}.\overline{\text{CarryIn}} + \overline{\text{a}}.\overline{\text{b}}.\text{CarryIn} + \text{a.b.CarryIn}
 \end{align*}
 
 \textbf{1-bit ALU:} Can perform AND, OR, addition, subtraction, and \texttt{slt}. For subtraction, set Binvert and CarryIn of the LSB to 1. For \texttt{slt}, use the Less input.
+
+3 control lines switch the multiplexors inside the 1-bit ALU: 1 line for Binvert, 2 lines for Operation.
 \begin{center}
     \includegraphics[width=0.4\textwidth]{figures/4F14/1-bit_ALU.png}
-    \includegraphics[width=0.4\textwidth]{figures/4F14/32-bit_ALU.png}
 \end{center}
 
-\textbf{Ripple-carry 32-bit ALU:} Connect 32 1-bit ALUs, propagating the carry from one bit to the next. \texttt{slt} is performed by subtracting b from a and passing the Less signals to the Result line (Result 0 = 1 if a < b).
+\textbf{Ripple-carry 32-bit ALU:} Connect 32 1-bit ALUs, propagating the carry from one bit to the next. \texttt{slt} is performed by subtracting b from a and passing the Less signals to the Result line (Result 0 = 1 if a < b, all other results = 0).
+\begin{center}
+    \includegraphics[width=0.5\textwidth]{figures/4F14/32-bit_ALU.png}
+\end{center}
 
 \textbf{Carry-lookahead 16-bit ALU:} Anticipate the CarryIn signal wihout waiting for it to propagate through the adder. Define:
 \begin{itemize}
     \item \textit{Generate:} gi = ai.bi (carry generated by bit i)
     \item \textit{Propagate:} pi = ai + bi (carry propagated by bit i)
 \end{itemize}
+It follows that c(i+1) = ai.ci + bi.ci + ai.bi = gi + pi.ci.
+
 4-bit carry-lookahead adder:
 \begin{itemize}
     \item[] c1 = g0 + p0.c0
@@ -203,7 +210,7 @@ Examples:
     \item[] c3 = g2 + p2.c2 = g2 + p2.g1 + p2.p1.g0 + p2.p1.p0.c0
     \item[] c4 = g3 + p3.c3 = g3 + p3.g2 + p3.p2.g1 + p3.p2.p1.g0 + p3.p2.p1.p0.c0
 \end{itemize}
-Connect 4 4-bit adders using a higher level of carry-lookahead:
+Connect 4 4-bit adders using a higher level of carry-lookahead (propagate if all 4 bits propagate, generate if any bit generates):
 \begin{itemize}
     \item[] P0 = p0.p1.p2.p3, G0 = g3 + p3.g2 + p3.p2.g1 + p3.p2.p1.g0
     \item[] P1 = p4.p5.p6.p7, G1 = g7 + p7.g6 + p7.p6.g5 + p7.p6.p5.g4
@@ -213,9 +220,9 @@ Connect 4 4-bit adders using a higher level of carry-lookahead:
 The carry-in signals are:
 \begin{itemize}
     \item[] C1 = G0 + P0.c0
-    \item[] C2 = G1 + P1.c4 = G1 + P1.G0 + P1.P0.c0
-    \item[] C3 = G2 + P2.c8 = G2 + P2.G1 + P2.P1.G0 + P2.P1.P0.c0
-    \item[] C4 = G3 + P3.c12 = G3 + P3.G2 + P3.P2.G1 + P3.P2.P1.G0 + P3.P2.P1.P0.c0
+    \item[] C2 = G1 + P1.C1 = G1 + P1.G0 + P1.P0.c0
+    \item[] C3 = G2 + P2.C2 = G2 + P2.G1 + P2.P1.G0 + P2.P1.P0.c0
+    \item[] C4 = G3 + P3.C3 = G3 + P3.G2 + P3.P2.G1 + P3.P2.P1.G0 + P3.P2.P1.P0.c0
 \end{itemize}
 Result is produced after 9 gate delays (each sum-of-product = 2 gate delays). For an $n$-bit adder, if $m$ carrying signals are generated at each level, $\log_m n$ levels are needed.
 \begin{center}
@@ -225,17 +232,16 @@ Result is produced after 9 gate delays (each sum-of-product = 2 gate delays). Fo
 
 \section{Datapaths and Pipelining}
 \textbf{Datapath:}
-\begin{center}
-    \includegraphics[width=0.7\textwidth]{figures/4F14/full_datapath.png}
-\end{center}
 The \textit{register file} has 3 5-bit inputs to select the 2 registers to be read and 1 register to be written. It also has 2 32-bit outputs and 1 32-bit input for reading and writing data.
-
-The multiplexers MUX1, MUX2 and MUX3 select signals based on the instruction. Bits 26-31 of the instruction always define the operation class. For R-format instruction, bits 0-5 defines the ALU operation.
+\begin{center}
+    \includegraphics[width=0.90\textwidth]{figures/4F14/full_datapath.png}
+\end{center}
+The multiplexors MUX1, MUX2 and MUX3 select signals based on the instruction. Bits 26-31 of the instruction always define the operation class. For R-format instruction, bits 0-5 defines the ALU operation.
 
 \textbf{Datapath control:}
 \begin{center}
-    \includegraphics[width=0.5\textwidth]{figures/4F14/datapath_control.png}
-    \includegraphics[width=0.45\textwidth]{figures/4F14/ALU_control.png}
+    \includegraphics[width=0.6\textwidth]{figures/4F14/datapath_control.png}
+    \includegraphics[width=0.6\textwidth]{figures/4F14/ALU_control.png}
 \end{center}
 A truth table of the control signals for each instruction (bits 0-5 and 26-31) can be implemented in \textit{ROM or Programmable Logic Array}.
 
@@ -252,27 +258,31 @@ Complex control signals can be instead implemented using a \textit{microprogram}
 \end{enumerate}
 For a large number of instructions, the speed-up approaches 4:1. Extra \textit{pipeline registers} stores the result from one pipe stage so that it can be used by the next. 
 \begin{center}
-    \includegraphics[width=0.7\textwidth]{figures/4F14/full_pipeline.png}
+    \includegraphics[width=0.95\textwidth]{figures/4F14/full_pipeline.png}
 \end{center}
 
 \textbf{Data hazards:} Data hazards occur when a value required in a register is not valid because a previous instruction has not yet updated it. Solutions include:
 \begin{itemize}
     \item \textit{Stall:} Stages of dependent instructions are not executed until value is available. Creates \textit{bubbles} into the pipeline and reduces the computer's efficiency. Implemented by adding a \textit{hazard detection unit}.
     \item \textit{Data forwarding:} Forward values directly to the ALU inputs, bypassing the register write-back. Implemented by adding multiplexors to the inputs of the ALU and supplying suitable control lines.
-    \begin{center}
-        \includegraphics[width=0.7\textwidth]{figures/4F14/data_forwarding.png}
-    \end{center}
-    The forwarding unit compares the registers that have just been read with any registers about to be written by the two downstream instructions (at stages MEM and WB). If there is a match, MUXA and/or MUXB are set to ignore the value read from the register file and instead use the appropriate forwarded value. 
     
+    The forwarding unit compares the registers that have just been read with any registers about to be written by the two downstream instructions (at stages MEM and WB). If there is a match, MUXA and/or MUXB are set to ignore the value read from the register file and instead use the appropriate forwarded value. 
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{figures/4F14/data_forwarding.png}
+    \end{center}
     Not working for \texttt{lw} as data is read from memory and required at the ALU at the same time. Can be solved by stalling or requiring the software to follow \texttt{lw} with an instruction indepedent of the load -- \textit{delayed load}.
 \end{itemize}
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/4F14/data_forwarding_pipeline.png}
+\end{center}
 
 \textbf{Branch hazards:} The address of the next instruction is not known until the branch instruction reaches stage 4 of the pipeline. Solutions include:
 \begin{itemize}
     \item Always stall on branches.
     \item Assume branch not taken and execute next instructions. If the branch is actually taken, flush the pipeline and discard the partial results, resuming execution at the branch target address.
     \item Predict the branch outcome.
-    \item Delayed branches: The instruction following the branch instruction is always executed (independent of the branch outcome).
+    \item \textit{Delayed branches:} The instruction following the branch instruction is always executed (independent of the branch outcome)
+    \texttt{\\branch instruction \\ next instruction \\ branch to target if branch taken}
 \end{itemize}
 
 \textbf{Superpipline and superscalar:} Superpiplining split the pipe stages into smaller stages with shorter clock cycles. Superscalar allows multiple instructions to be executed at the same clock cycle.
@@ -304,7 +314,6 @@ To reference a word in the cache:
     \item 2-bit \textit{block offset} identifies the word within the block.
     \item The \textit{valid bit} is set low on start-up.
 \end{itemize}
-
 To handle a cache miss, stall the entire machine and do:
 \begin{enumerate}
     \item Reset the PC to PC - 4.
@@ -316,7 +325,7 @@ To handle a cache miss, stall the entire machine and do:
 \textbf{Cache writes:} Update the main memory when the cache is updated, two approaches available:
 \begin{itemize}
     \item \textit{Write through:} data is written to the cache and also the main memory. \textit{Write buffers} can be used to avoid stalling. \\
-    Advantages: read misses are cheaper since they does not require a write to main memory \& easier to implement.
+    Advantages: read misses are cheaper since they do not require a write to main memory \& easier to implement.
     \item \textit{Write back:} data is written only to the cache, and the modified cache block is written to main memory only when it is replaced. \\
     Advantages: words are written at cache rather than main memory speed \& multiple writes to a block require only one write to main memory. 
 \end{itemize}
@@ -327,7 +336,7 @@ To handle a cache miss, stall the entire machine and do:
     \item \textit{Set associative cache:} A memory block can reside in a number of locations in a unique set. Only a search within the set is needed. The index of the set is (block address) mod (\# sets in cache).
 \end{itemize}
 \begin{center}
-    \includegraphics[width=0.6\textwidth]{figures/4F14/set_associative.png}
+    \includegraphics[width=0.8\textwidth]{figures/4F14/set_associative.png}
 \end{center}
 
 \textbf{Block replacement:} Two common strategies:
@@ -341,29 +350,50 @@ To handle a cache miss, stall the entire machine and do:
     \item Execution time = (CPU execution cycles + memory stall cycles) $\times$ clock cycle time
     \item Memory stall cycles = \# instructions $\times$ misses per instruction $\times$ miss penalty 
 \end{itemize}
+To improve performance, reduce the miss rate by using a multi-level cache (small, fast, primary, low associativity cache + large secondary, high associativity cache), or reduce the miss penalty by incerasing the bandwidth to main memory (e.g. use a wider bus).
 
-\textbf{Virtual memory:} Virtual addresses are used and translated into physical address by the operating system.
+\textbf{Virtual memory:}
+\begin{itemize}
+    \item Allows the total amount of memory available to a program to exceed the physical amount of main memory.
+    \item Allows main memory to be shared between multiple programs on the same machine, with each program having its own address space and is protected from other programs.
+\end{itemize}
+Virtual addresses are used and translated into physical address by the operating system.
 The main memory and virtual memory are divided into \textit{pages}.
 
 Main memory acts as a cache for virtual memory with a block size of one page. A \textit{page fault} corresponds to a cache miss.
+
+The location of pages (fully associative) is stored in a \textit{page table} indexed by the virtual page number and contains the physical page number. Each running program has its own page table. A \textit{page table register} points to the start of the page table. For each page table entry, a valid bit determines whether the page is in memory.
+
+Write-back is used, with a \textit{dirty bit} to indicate whether the page has been modified.
 
 \begin{center}
     \includegraphics[width=0.6\textwidth]{figures/4F14/page_table.png}
 \end{center}
 
-The location of pages (fully associative) is stored in a \textit{page table} indexed by the virtual page number and contains the physical page number. Each running program has its own page table. A page table register points to the start of the page table. For each page table entry, a valid bit determines whether the page is in memory.
+\textbf{Translation lookaside buffer (TLB):} A special, fast cache to store recently used translations. The TLB only caches part of the page table that point to main memory, often fully associative with random placement. Each entry contains:
 
-Write-back is used, with a \textit{dirty bit} to indicate whether the page has been modified.
+\begin{itemize}
+    \item Tag = full virtual page number (fully associative) or part of the virtual page number (not fully associative, with the rest of the virtual page number as index).
+    \item Data = physical page number + dirty bit.
+\end{itemize}
 
-\textbf{Translation lookaside buffer (TLB):} A special, fast cache to store recently used translations. The TLB only caches part of the page table that point to main memory (not disk), often fully associative with random placement. 
+Write-back is used to ensure the dirty bits are kept up to date.
 
-Tag = virtual page number, data = physical page number. Write back is used to ensure the dirty bits are kept up to date.
+On a TLB miss, if the page is in main memory, the TLB entry is updated from the page table and the translation retired. Otherwise, a page fault is generated.
 
 \begin{center}
     \includegraphics[width=0.6\textwidth]{figures/4F14/tlb.png}
 \end{center}
 
+\textbf{Process:} The state of a program defined by the page table, the PC and the other registers. When a process switch occurs, it is necessary to either flush the TLB or extend the virtual address with a process identifier to distinguish entries from different processes.
+
 \section{Interfacing to I/O Devices}
+\textbf{Measuring I/O performance:}
+\begin{itemize}
+    \item \textit{Bandwidth:} How much data can flow through the system per second?
+    \item \textit{Latency:} How long does it take to initialise an I/O process?
+\end{itemize}
+
 \textbf{Bus:} A bus is a shared communication link which uses one set of wires to connect multiple subsystems. There are two main classes of buses:
 \begin{itemize}
     \item \textit{Processor-memory:} short, high performance, matched to memory system.
@@ -392,14 +422,26 @@ Exchange starts when the device raises ReadReq and puts address on data lines.
 
 \textbf{I/O event presentation:}
 \begin{itemize}
-    \item \textit{Memory-mapped I/O:} Each device appears as a set of data and control registers at a particular address. The control register contrains status bits that can be continully cheked (\textit{polling}).
-    \item \textit{Interrupt-driven I/O:} An I/O device generates an interrupt when it requires attention. The CPU:
+    \item \textit{Memory-mapped I/O:} 
+    \begin{itemize}
+        \item Each device appears as a set of data and control registers at a particular address.
+        \item The control register contains status bits that can be continully cheked (\textit{polling}).
+        \item Requires the least hardware but wasteful of CPU time.
+        \item Suitable for low-bandwidth devices which can tolerate low frequency polling, e.g. mice.
+    \end{itemize}
+    \item \textit{Interrupt-driven I/O:} 
+    \begin{itemize}
+        \item An I/O device generates an interrupt when it requires attention. The CPU:
     \begin{enumerate}
         \item Stops executing the current process.
         \item Finds the cause of the interrupt.
         \item Services the interrupt.
         \item Resumes execution of the original process.
     \end{enumerate}
+        \item Requires extra signal lines to interrupt the CPU.
+        \item CPU must be involved in every bus transaction, but no CPU load when the device is idle.
+        \item Suitable for relatively low-bandwidth devices which are mostly idle, e.g. printers.
+    \end{itemize}
 \end{itemize}
 
 \textbf{Direct memory access (DMA):} Transfer data directly between memory and I/O devices without CPU involvement (the DMA controller is the bus master instead). CPU is interrupted at the start and end of each DMA.
@@ -410,6 +452,7 @@ Steps in a DMA transfer:
     \item The DMA controller starts the transfer of the data block (may take many transactions). After each transaction, the DMA controller updates the memory read/write address.
     \item Once the DMA transfer is complete, the DMA controller interrupts the CPU, which then becomes bus master and checks that the operation completed successfully.
 \end{enumerate}
+(Hence the CPU is only involved at the start and end of the transfer)
 
 DMA and virtual memory:
 \begin{itemize}
@@ -419,8 +462,8 @@ DMA and virtual memory:
 
 Problems with DMA in cache systems:
 \begin{itemize}
-    \item If the DMA places data directly from disk into memory, the cache may contrain stale data.
-    \item If the cache is write-back, the DMA unit might transfer stale data from memory to disk, by passing the newer data in the cache.
+    \item If the DMA places data directly from disk into memory, the cache may contain stale data.
+    \item If the cache is write-back, the DMA unit might transfer stale data from memory to disk, bypassing the newer data in the cache.
 \end{itemize}
 
 Solutions:
@@ -430,7 +473,23 @@ Solutions:
     \item Selectively flush or invalidate individual caches entries for DMA.
 \end{itemize}
 
-\textbf{Point-to-point networks:} Use a serial switched point-to-point network between devices to bypass the limit on bus length.
+\textbf{Buses vs point-to-point networks:} 
+\begin{itemize}
+    \item Clock rate of a parallel bus is limited by noise, stray capacitance, crosstalk and clock skew.
+    \item To make parallel buses faster, need to make it shorter and limit the number of devices connected to it.
+    \item Serial point-to-point networks mitigate the effects of different bit-wise timing skews.
+    \item Serial networks can run very fast since there are only two devices on each link -- less load, noise and stray capacitance.
+    \item Serial connections also require fewer wires, and does not require bus mastering protocols.
+\end{itemize}
+\begin{center}
+    \includegraphics[width=0.6\textwidth]{figures/4F14/point-to-point.png}
+\end{center}
+
+Examples of transition from bus to network:
+\begin{itemize}
+    \item Parallel ATA to Serial ATA (SATA) for disks.
+    \item Peripheral Component Interconnect (PCI) to PCI Express (PCIe) for generic I/O devices and graphic cards.
+\end{itemize}
 
 \section{Parallel Processing}
 \textbf{Flynn's classification of parallelism:}
@@ -443,7 +502,7 @@ Solutions:
 
 \textbf{SIMD computers:} Operate on vectors of data. SIMD instructions are broadcast to all execution units over a network, each unit has its own registers and memory. Execution units are synchronised, each handling a different data element.
 
-SIMD machines works best on arrays and vectors.
+SIMD machines works best on arrays and vectors (\textit{data parallel}).
 
 \textbf{MIMD computers:} Multiple SISD machines connected on a single bus or network. Can be used to run a separate process on each processor or a parallel processing program. The processors can communicate in two ways:
 \begin{itemize}
@@ -453,26 +512,47 @@ SIMD machines works best on arrays and vectors.
     \item \textit{Message passing:} Each processor has its own private memory. Slower but synchronisation is implicit.
 \end{itemize}
 
-\textbf{Snooping:} All cache controllers monitor the bus and react to reads and writes in other caches to ensure cache coherence. Two ways to deal with writes:
+\textbf{Challenges in developing parallel processing programs:}
+\begin{enumerate}
+    \item Communications overhead and/or cache issues limit speed-up.
+    \item The programmers needs to know a lot about the hardware.
+    \item Amdahl's law: it is not much use parallelising small parts of the program.
+\end{enumerate}
+
+\textbf{Snooping:} All cache controllers monitor the bus and react to reads and writes in other caches to ensure \textit{cache coherency}.
+Two ways to deal with writes:
 \begin{itemize}
     \item \textit{Write-invalidate:} the writing processor broadcasts an invalidate signal to all other caches to invalidate the copy of the block. (practical SMP systems use write-back caches with write-invalidate since it reduces bus traffic)
     \item \textit{Write-update:} the writing processor broadcasts the new data over the bus for other caches to update the copy of the block. (like a write-through cache)
 \end{itemize}
-
 On a read miss, the cache notifies other caches to check if they have a more up-to-date copy of the block.
-
-\textbf{MIMD networks:} Networks allow more processors than a single bus, where each processor has a local memory (\textit{distributed memory}).
-Fully connected network has link between every pair of nodes but is expensive.
-
 \begin{center}
-    \includegraphics[width=0.4\textwidth]{figures/4F14/network_topology.png}
+    \includegraphics[width=0.6\textwidth]{figures/4F14/snooping.png}
 \end{center}
 
+\textbf{MIMD networks:}
+\begin{itemize}
+    \item Single bus designs are limited by the conflicting bus requirements of high bandwidth, low latency and unlimited length.
+    \item Networks allow more processors than a single bus, where each processor has a local memory (\textit{distributed memory} and possibly multiple private address spaces).
+    \item Alternative: NUMA with a global address space with cache coherency enforced using \textit{directories}.
+\end{itemize}
+\begin{center}
+    \includegraphics[width=0.4\textwidth]{figures/4F14/MIMD_network.png}
+\end{center}
 Networks performance can be measured by:
 \begin{itemize}
     \item \textit{Total network bandwidth} = \# links $\times$ bandwidth per link (best possible performance).
     \item \textit{Bisection bandwidth:} divide the network into two and sum the bandwidth of the links crossing the division (closer to the worst case). 
 \end{itemize}
+Fully connected network has link between every pair of nodes, yields the best performance but is expensive. Alternatives are:
+\begin{center}
+    \includegraphics[width=0.4\textwidth]{figures/4F14/network_topology.png}
+\end{center}
+
+\textbf{NUMAs vs clusters:}
+\begin{center}
+    \includegraphics[width=0.6\textwidth]{figures/4F14/NUMA_vs_cluster.png}
+\end{center}
 
 \textbf{Simultaneous multithreading (SMT):} Run multiple processes concurrently on a superscalar processor. Separate register file, PC, and TLB are required for each process. ($\neq$ multi-core CPUs -- multiple entire processors on the same chip).
 
